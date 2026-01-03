@@ -1,0 +1,25 @@
+{
+  "name": "ai-file-processor",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/start_dev_docker-all_only-front-local.ps1",
+    "docker:down": "cd E:\\project\\converter && docker-compose down",
+    "dev:shared": "cd shared && npm run watch",
+    "dev:backend": "cd backend && npm run start:dev",
+    "dev:frontend": "cd frontend && ng serve",
+    "dev:all": "concurrently \"npm run dev:shared\" \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "install:all": "cd shared && npm install && cd ../backend && npm install && cd ../frontend && npm install",
+    "build:all": "cd shared && npm run build && cd ../backend && npx tsc --build && cd ../frontend && ng build",
+    "tree": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1",
+    "tree:all": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -All",
+    "tree:docker": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -DockerOnly",
+    "tree:simple": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Simple",
+    "tree:backend": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./backend",
+    "tree:frontend": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./frontend",
+    "tree:shared": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./shared"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}

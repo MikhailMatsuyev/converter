@@ -1,0 +1,64 @@
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host "   AI File Processor - Development      " -ForegroundColor Yellow
+Write-Host "========================================" -ForegroundColor Cyan
+Write-Host ""
+
+# Пути
+$PROJECT_ROOT = "E:\project\converter"
+$FRONTEND_DIR = "$PROJECT_ROOT\frontend"
+
+# Проверка Docker
+Write-Host "Checking Docker..." -ForegroundColor Gray
+try {
+    docker --version | Out-Null
+    Write-Host "  Docker OK" -ForegroundColor Green
+}
+catch {
+    Write-Host "  Docker NOT FOUND" -ForegroundColor Red
+    Write-Host "  Start Docker Desktop first" -ForegroundColor Yellow
+    pause
+    exit 1
+}
+
+# Запуск Docker Compose
+Write-Host "`n[1/3] Starting Docker services..." -ForegroundColor Green
+Set-Location $PROJECT_ROOT
+
+# Останавливаем старые контейнеры
+docker-compose down 2>$null | Out-Null
+
+# Запускаем Docker
+Write-Host "  Running docker-compose up -d" -ForegroundColor Gray
+docker-compose up -d
+
+# Ждем немного
+Write-Host "  Waiting 5 seconds..." -ForegroundColor Gray
+Start-Sleep -Seconds 5
+
+# Показываем статус
+Write-Host "`n[2/3] Container status:" -ForegroundColor Green
+docker-compose ps
+
+# Информация
+Write-Host "`n[3/3] Starting Angular frontend..." -ForegroundColor Green
+
+Write-Host "`n" + ("=" * 50) -ForegroundColor Cyan
+Write-Host "   DEVELOPMENT READY   " -ForegroundColor Yellow
+Write-Host ("=" * 50) -ForegroundColor Cyan
+
+Write-Host "`nURLs:" -ForegroundColor White
+Write-Host "  Frontend: http://localhost:4200" -ForegroundColor Magenta
+Write-Host "  Backend:  http://localhost:3000" -ForegroundColor Cyan
+Write-Host "  Swagger:  http://localhost:3000/api" -ForegroundColor Blue
+
+Write-Host "`nControls:" -ForegroundColor White
+Write-Host "  To stop Angular: Ctrl+C" -ForegroundColor Gray
+Write-Host "  To stop Docker: docker-compose down" -ForegroundColor Gray
+
+Write-Host "`n" + ("=" * 50) -ForegroundColor Cyan
+Write-Host ""
+
+# Запуск Angular
+Set-Location $FRONTEND_DIR
+Write-Host "Starting Angular..." -ForegroundColor Gray
+ng serve --open --host localhost

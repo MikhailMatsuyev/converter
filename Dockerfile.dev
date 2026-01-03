@@ -1,0 +1,38 @@
+FROM node:20-alpine
+
+# 1. Системные зависимости с очисткой кэша
+RUN apk update && \
+    apk add --no-cache --virtual .build-deps \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/cache/apk/*
+
+# 2. Рабочая директория
+WORKDIR /app/backend
+
+# 3. Копируем только package.json (для кэширования слоя)
+COPY backend/package*.json ./
+
+# 4. Чистая установка с очисткой кэша
+RUN npm cache clean --force && \
+    npm config set fetch-retry-maxtimeout 600000 && \
+    npm config set fetch-retry-mintimeout 100000 && \
+    npm install --legacy-peer-deps --verbose && \
+    npm cache clean --force
+
+# 5. Устанавливаем глобальные утилиты
+RUN npm install -g @nestjs/cli
+
+# 6. Копируем исходники
+COPY backend/ ./
+
+# 7. Копируем shared
+WORKDIR /app
+COPY shared/ ./shared/
+
+# 8. Возвращаемся в backend
+WORKDIR /app/backend
+
+# 9. Команда запуска
+CMD ["npm", "run", "start:dev"]

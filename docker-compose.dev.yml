@@ -1,0 +1,133 @@
+# docker-compose.dev.yml - РАЗРАБОТКА
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: nest-backend-dev
+    ports:
+      - "3000:3000"
+      - "9229:9229"  # для отладки Node.js
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_file_processor
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-ai-file-processor-dev}
+      FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
+      FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpass}
+      # Hot reload
+      CHOKIDAR_USEPOLLING: "true"
+      WATCHPACK_POLLING: "true"
+    volumes:
+      # Исходный код
+      - ./backend:/app/backend
+      - ./shared:/app/shared
+      # Конфигурационные файлы
+      - ./backend/package.json:/app/backend/package.json
+      - ./shared/package.json:/app/shared/package.json
+      - ./backend/tsconfig.json:/app/backend/tsconfig.json
+      - ./shared/tsconfig.json:/app/shared/tsconfig.json
+      - ./backend/nest-cli.json:/app/backend/nest-cli.json
+      - ./firebase:/app/firebase:ro
+      # Изолируем node_modules
+      # - /app/backend/node_modules
+      # - /app/shared/node_modules
+    command: sh -c "cd /app/backend && npm run start:dev"
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    # Больше ресурсов для разработки
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+
+  db:
+    image: postgres:15-alpine
+    container_name: postgres-dev
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: ai_file_processor
+      POSTGRES_HOST_AUTH_METHOD: trust  # упрощенный доступ
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./db/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin-dev
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_dev_data:/var/lib/pgadmin
+      - ./pgadmin/servers.json:/pgadmin4/servers.json
+    networks:
+      - app-network
+    restart: unless-stopped
+    depends_on:
+      - db
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis-dev
+    ports:
+      - "6379:6379"
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-devpass}
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-devpass}
+    volumes:
+      - redis_dev_data:/data
+    networks:
+      - app-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-devpass}", "ping"]
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: mailhog-dev
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_dev_data:
+  pgadmin_dev_data:
+  redis_dev_data:

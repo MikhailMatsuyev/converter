@@ -1,0 +1,53 @@
+# Frontend (не нужен для бэкенда)
+frontend/
+frontend/**/*
+
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Build outputs
+dist/
+build/
+*.js.map
+*.tsbuildinfo
+
+# Environment files
+.env
+.env.local
+.env.*.local
+.env.example
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+
+# Docker
+Dockerfile*
+docker-compose.yml-old
+.dockerignore
+
+# Logs
+logs/
+*.log
+
+# Tests
+coverage/
+*.spec.ts
+*.test.ts
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+tmp/
+temp/
+

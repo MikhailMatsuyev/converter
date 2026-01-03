@@ -1,0 +1,51 @@
+﻿{
+  "name": "@ai-file-processor/shared",
+  "version": "1.0.0",
+  "description": "Shared types, interfaces, DTOs and entities for AI File Processor",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc --watch",
+    "prepublishOnly": "npm run build",
+    "clean": "rm -rf dist"
+  },
+  "peerDependencies": {
+    "@nestjs/swagger": "^7.3.0",
+    "typeorm": "^0.3.0",
+    "@nestjs/common": "^10.0.0",
+    "@angular/core": "^17.0.0"
+  },
+  "dependencies": {
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.3.0",
+    "@types/node": "^20.10.0",
+    "@nestjs/swagger": "^7.3.0",
+    "typeorm": "^0.3.0",
+    "@nestjs/common": "^10.0.0"
+  },
+  "keywords": ["typescript", "dto", "shared", "nestjs", "angular", "interfaces", "entities"],
+  "author": "AI File Processor Team",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.d.ts"
+    },
+    "./interfaces": {
+      "types": "./dist/interfaces/index.d.ts",
+      "default": "./dist/interfaces/index.d.ts"
+    },
+    "./backend": {
+      "types": "./dist/backend/index.d.ts",
+      "default": "./dist/backend/index.d.ts"
+    },
+    "./frontend": {
+      "types": "./dist/frontend/index.d.ts",
+      "default": "./dist/frontend/index.d.ts"
+    }
+  }
+}
