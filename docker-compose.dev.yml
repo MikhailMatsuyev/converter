@@ -28,16 +28,17 @@ services:
       - ./backend:/app/backend
       - ./shared:/app/shared
       # Конфигурационные файлы
-      - ./backend/package.json:/app/backend/package.json
-      - ./shared/package.json:/app/shared/package.json
-      - ./backend/tsconfig.json:/app/backend/tsconfig.json
-      - ./shared/tsconfig.json:/app/shared/tsconfig.json
-      - ./backend/nest-cli.json:/app/backend/nest-cli.json
+      #- ./backend/package.json:/app/backend/package.json
+      # - ./shared/package.json:/app/shared/package.json
+      #- ./backend/tsconfig.json:/app/backend/tsconfig.json
+      # - ./shared/tsconfig.json:/app/shared/tsconfig.json
+      # - ./backend/nest-cli.json:/app/backend/nest-cli.json
       - ./firebase:/app/firebase:ro
       # Изолируем node_modules
       # - /app/backend/node_modules
       # - /app/shared/node_modules
-    command: sh -c "cd /app/backend && npm run start:dev"
+    # sh -c "cd /app/backend && npm run start:dev"
+    command: sh -c "cd /app/shared && npm run build && cd /app/backend && npm run start:dev"
     restart: unless-stopped
     depends_on:
       db:
