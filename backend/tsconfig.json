@@ -10,6 +10,7 @@
     "experimentalDecorators": true,
     "allowSyntheticDefaultImports": true,
     "target": "ES2022",
+    "types": ["node"],
     "sourceMap": true,
     "outDir": "./dist/backend",
     "baseUrl": "./",

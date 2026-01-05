@@ -65,11 +65,11 @@ pgadmin/           # Локальные данные pgAdmin
 # ===================== #
 # Firebase              #
 # ===================== #
-firebase/ai-file-processor-8d09e-firebase-adminsdk-fbsvc-d92355ccbd.json
+firebase-infra/ai-file-processor-8d09e-firebase-adminsdk-fbsvc-d92355ccbd.json
 firebase/*.key
 firebase/*.pem
-firebase/*-private-key.json
-firebase/*-admin-sdk.json
+firebase-infra/*-private-key.json
+firebase-infra/*-admin-sdk.json
 
 # ===================== #
 # Файлы сборки          #

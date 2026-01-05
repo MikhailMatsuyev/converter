@@ -2,19 +2,28 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { IAuthResponse, IAuthUser } from '@shared/interfaces';
 import { Observable, from, throwError } from 'rxjs';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { catchError, map, mergeMap, tap } from 'rxjs/operators';
+import { getFirebaseApp } from "../firebase-admin/firebase-admin.config";
 
 @Injectable()
 export class AuthService {
-  private firebaseAuth: admin.auth.Auth;
+    private firebaseAuth = getFirebaseApp().auth();
 
-  constructor() {
-    this.firebaseAuth = admin.auth();
-  }
+    // private firebaseAuth: admin.auth.Auth;
+
+  // constructor() {
+    // this.firebaseAuth = admin.auth();
+  // }
+
+    constructor() {
+        console.log('AuthService constructed');
+    }
 
   // Основной метод проверки токена (Observable)
   validateFirebaseToken$(idToken: string): Observable<admin.auth.DecodedIdToken> {
+    this.firebaseAuth.verifyIdToken(idToken).then(v=>console.log(v))
     return from(this.firebaseAuth.verifyIdToken(idToken)).pipe(
+      tap((resp) => console.log("Ответ после валидации токена", resp)),
       catchError(error => {
         return throwError(() => new UnauthorizedException('Invalid Firebase token'));
       })
@@ -25,7 +34,7 @@ export class AuthService {
   login$(idToken: string): Observable<IAuthResponse> {
     return this.validateFirebaseToken$(idToken).pipe(
       // Получаем пользователя по UID
-      mergeMap(decodedToken => 
+      mergeMap(decodedToken =>
         from(this.firebaseAuth.getUser(decodedToken.uid)).pipe(
           catchError(error => {
             return throwError(() => new UnauthorizedException('User not found'));
