@@ -1,4 +1,13 @@
-import { Controller, Post, Body, HttpException, HttpStatus, UnauthorizedException, Get } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpException,
+  HttpStatus,
+  UnauthorizedException,
+  Get,
+  HttpCode
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
@@ -13,6 +22,7 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Public()
+  @HttpCode(HttpStatus.OK)
   @Post('login')
   @ApiOperation({ summary: 'Login with Firebase token' })
   @ApiResponse({
@@ -40,7 +50,6 @@ export class AuthController {
     );
   }
 
-  @Public()
   @Get('me')
   @ApiOperation({ summary: 'Get current user info from token' })
   @ApiResponse({
