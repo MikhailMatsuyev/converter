@@ -553,3 +553,43 @@ Swagger с токеном
 что хранить в request.user
 
 подготовка к Prisma / БД
+
+
+Роадмап про тесты
+Вот правильный roadmap — по желанию:
+
+1️⃣ Unit-тесты FirebaseAuthGuard
+
+Проверить:
+
+нет токена → 401
+
+токен в header → ok
+
+токен в body → reject
+
+(быстро, чисто, без NestApplication)
+
+2️⃣ Unit-тесты AuthService
+
+login$ happy-path
+
+invalid token
+
+Firebase error mapping
+
+3️⃣ Integration-тест (опционально)
+
+настоящий Firebase
+
+отдельный env
+
+запуск вручную
+
+4️⃣ Зафиксировать auth-контракт
+
+интерфейсы
+
+shared DTO
+
+строгая типизация ответов
