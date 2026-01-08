@@ -33,7 +33,7 @@ services:
       #- ./backend/tsconfig.json:/app/backend/tsconfig.json
       # - ./shared/tsconfig.json:/app/shared/tsconfig.json
       # - ./backend/nest-cli.json:/app/backend/nest-cli.json
-      - ./firebase:/app/firebase:ro
+      # - ./firebase:/app/firebase:ro
       # Изолируем node_modules
       # - /app/backend/node_modules
       # - /app/shared/node_modules

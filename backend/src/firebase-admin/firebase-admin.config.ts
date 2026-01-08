@@ -1,11 +1,14 @@
 import * as admin from 'firebase-admin';
 import { ServiceAccount } from 'firebase-admin';
 
-let firebaseApp: admin.app.App;
+// let firebaseApp: admin.app.App;
 
 export function getFirebaseApp(): admin.app.App {
-  if (!firebaseApp) {
-    firebaseApp = admin.initializeApp({
+  if (admin.apps.length > 0) {
+    return admin.app();
+  }
+
+    return  admin.initializeApp({
       credential: admin.credential.cert({
         projectId: process.env.FIREBASE_PROJECT_ID,
         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
@@ -13,9 +16,10 @@ export function getFirebaseApp(): admin.app.App {
       } as ServiceAccount),
       storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
     });
-  }
+}
 
-  return firebaseApp;
+export function getFirebaseAuth(): admin.auth.Auth {
+  return getFirebaseApp().auth();
 }
 
 // import * as admin from 'firebase-admin';

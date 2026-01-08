@@ -2,7 +2,10 @@
   "name": "ai-file-processor",
   "version": "1.0.0",
   "private": true,
-  "workspaces": ["shared", "backend"],
+  "workspaces": [
+    "shared",
+    "backend"
+  ],
   "scripts": {
     "start:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/start_dev_docker-all_only-front-local.ps1",
     "start:build-docker": "cd E:\\project\\converter && docker-compose build --no-cache backend",

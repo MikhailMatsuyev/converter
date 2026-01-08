@@ -2,10 +2,12 @@ import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Observable, of, interval } from 'rxjs';
 import { map, switchMap, take } from 'rxjs/operators';
+import { Public } from "../security/public.decorator";
 
 @ApiTags('health')
 @Controller('health')
 export class HealthController {
+  @Public()
   @Get()
   @ApiOperation({
     summary: 'Проверка здоровья сервиса',
