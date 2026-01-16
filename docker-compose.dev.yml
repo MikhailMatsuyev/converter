@@ -10,11 +10,13 @@ services:
     ports:
       - "3000:3000"
       - "9229:9229"  # для отладки Node.js
+    env_file:
+      - .env
     environment:
       NODE_ENV: development
       PORT: 3000
       DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_file_processor
-      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID:-ai-file-processor-dev}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
       FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}
       REDIS_HOST: redis

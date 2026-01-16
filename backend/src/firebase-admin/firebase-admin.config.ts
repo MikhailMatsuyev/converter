@@ -1,26 +1,64 @@
 import * as admin from 'firebase-admin';
-import { ServiceAccount } from 'firebase-admin';
 
-// let firebaseApp: admin.app.App;
+let app: admin.app.App | null = null;
 
-export function getFirebaseApp(): admin.app.App {
-  if (admin.apps.length > 0) {
-    return admin.app();
+export function getFirebaseAdmin() {
+  if (app) {
+    return app;
+  }
+  // if (process.env.NODE_ENV !== 'production') {
+  //   throw new Error(
+  //     'Firebase Admin is disabled outside production environment'
+  //   );
+  // }
+
+  if (admin.apps.length === 0) {
+  console.log('🔥 Firebase init called===============8989==');
+  console.log({
+    projectId: process.env.FIREBASE_PROJECT_ID,
+    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+    hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
+  });
+
+  app = admin.initializeApp({
+    credential: admin.credential.cert({
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+      privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+    }),
+  })
+  } else {
+    app = admin.app();
   }
 
-    return  admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-        privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-      } as ServiceAccount),
-      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    });
+  return app;
 }
 
-export function getFirebaseAuth(): admin.auth.Auth {
-  return getFirebaseApp().auth();
-}
+
+
+// import * as admin from 'firebase-admin';
+// import { ServiceAccount } from 'firebase-admin';
+//
+// // let firebaseApp: admin.app.App;
+//
+// export function getFirebaseApp(): admin.app.App {
+//   if (admin.apps.length > 0) {
+//     return admin.app();
+//   }
+//
+//     return  admin.initializeApp({
+//       credential: admin.credential.cert({
+//         projectId: process.env.FIREBASE_PROJECT_ID,
+//         clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+//         privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+//       } as ServiceAccount),
+//       storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+//     });
+// }
+//
+// export function getFirebaseAuth(): admin.auth.Auth {
+//   return getFirebaseApp().auth();
+// }
 
 // import * as admin from 'firebase-admin';
 // import * as path from 'path';

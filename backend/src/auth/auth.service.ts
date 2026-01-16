@@ -1,85 +1,32 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import * as admin from 'firebase-admin';
 import { IAuthResponse, IAuthUser } from '@shared/interfaces';
-import { Observable, from, throwError } from 'rxjs';
-import { catchError, map, mergeMap, tap } from 'rxjs/operators';
-import { getFirebaseApp } from "../firebase-admin/firebase-admin.config";
+import { Observable, from, of, throwError, mergeMap } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
+import { getFirebaseAdmin } from '../firebase-admin/firebase-admin.config';
 
 @Injectable()
 export class AuthService {
-    private firebaseAuth = getFirebaseApp().auth();
-
-    // private firebaseAuth: admin.auth.Auth;
-
-  // constructor() {
-    // this.firebaseAuth = admin.auth();
-  // }
-
-    constructor() {
-        console.log('AuthService constructed');
-    }
-
-  // Основной метод проверки токена (Observable)
-  validateFirebaseToken$(idToken: string): Observable<admin.auth.DecodedIdToken> {
-    this.firebaseAuth.verifyIdToken(idToken).then(v=>console.log(v))
-    return from(this.firebaseAuth.verifyIdToken(idToken)).pipe(
-      tap((resp) => console.log("Ответ после валидации токена", resp)),
-      catchError(error => {
-        return throwError(() => new UnauthorizedException('Invalid Firebase token'));
-      })
-    );
+  private get firebaseAuth() {
+    return getFirebaseAdmin().auth();
   }
 
-  // Метод логина (Observable)
-  login$(idToken: string): Observable<IAuthResponse> {
-    return this.validateFirebaseToken$(idToken).pipe(
-      // Получаем пользователя по UID
-      mergeMap(decodedToken =>
-        from(this.firebaseAuth.getUser(decodedToken.uid)).pipe(
-          catchError(error => {
-            return throwError(() => new UnauthorizedException('User not found'));
-          })
-        )
-      ),
-      // Преобразуем в IAuthUser и IAuthResponse
-      map(firebaseUser => {
-        const authUser: IAuthUser = {
-          uid: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          displayName: firebaseUser.displayName || null,
-          photoURL: firebaseUser.photoURL || null,
-          emailVerified: firebaseUser.emailVerified || false,
-        };
-
-        const response: IAuthResponse = {
-          user: authUser,
-          token: idToken,
-          expiresIn: 3600, // 1 час
-        };
-
-        return response;
-      }),
-      catchError(error => {
-        // Пробрасываем оригинальную ошибку
-        return throwError(() => error);
-      })
-    );
+  constructor() {
+    console.log('AuthService constructed');
   }
 
-  // Получение информации о пользователе (Observable)
-  getUserInfo$(idToken: string): Observable<IAuthUser> {
-    return this.validateFirebaseToken$(idToken).pipe(
-      map(decodedToken => ({
-        uid: decodedToken.uid,
-        email: decodedToken.email || '',
-        displayName: decodedToken.name || null,
-        photoURL: decodedToken.picture || null,
-        emailVerified: decodedToken.email_verified || false,
-      }))
-    );
+  // 🔹 Используется ТОЛЬКО после Guard
+  getUserInfo$(decodedToken: admin.auth.DecodedIdToken): Observable<IAuthUser> {
+    return of({
+      uid: decodedToken.uid,
+      email: decodedToken.email || '',
+      displayName: decodedToken.name || null,
+      photoURL: decodedToken.picture || null,
+      emailVerified: decodedToken.email_verified || false,
+    });
   }
 
-  // Получение пользователя по UID (Observable)
+  // 🔹 Получение пользователя из Firebase по UID
   getUserByUid$(uid: string): Observable<IAuthUser> {
     return from(this.firebaseAuth.getUser(uid)).pipe(
       map(firebaseUser => ({
@@ -89,9 +36,38 @@ export class AuthService {
         photoURL: firebaseUser.photoURL || null,
         emailVerified: firebaseUser.emailVerified || false,
       })),
-      catchError(error => {
-        return throwError(() => new UnauthorizedException('User not found'));
+      catchError(() =>
+        throwError(() => new UnauthorizedException('User not found')),
+      ),
+    );
+  }
+
+  validateFirebaseToken$(idToken: string): Observable<admin.auth.DecodedIdToken> {
+    return from(this.firebaseAuth.verifyIdToken(idToken)).pipe(
+      catchError(() => {
+        return throwError(() => new UnauthorizedException('Invalid Firebase token'));
       })
+    );
+  }
+
+  // 🔹 login — если нужен (например, для first-login логики)
+  // auth.service.ts
+  login$(idToken: string): Observable<IAuthResponse> {
+    return this.validateFirebaseToken$(idToken).pipe(
+      mergeMap(decodedToken =>
+        from(this.firebaseAuth.getUser(decodedToken.uid))
+      ),
+      map(firebaseUser => ({
+        user: {
+          uid: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          displayName: firebaseUser.displayName || null,
+          photoURL: firebaseUser.photoURL || null,
+          emailVerified: firebaseUser.emailVerified || false,
+        },
+        token: idToken,
+        expiresIn: 3600,
+      }))
     );
   }
 }

@@ -6,28 +6,29 @@ import {
   HttpStatus,
   UnauthorizedException,
   Get,
-  HttpCode
+  HttpCode, Req
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { IAuthResponse, IAuthUser } from '@shared/interfaces';
+import { AuthRequest, IAuthMe, IAuthResponse, IAuthUser } from '@shared/interfaces';
 import { Public } from "../security/public.decorator";
 
 @ApiTags('auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(private readonly authService: AuthService) {
+  }
 
   @Public()
   @HttpCode(HttpStatus.OK)
   @Post('login')
-  @ApiOperation({ summary: 'Login with Firebase token' })
+  @ApiOperation({summary: 'Login with Firebase token'})
   @ApiResponse({
     status: 200,
-    description: 'Authentication successful'
+    description: 'Authentication successful.'
   })
   @ApiResponse({
     status: 401,
@@ -51,7 +52,7 @@ export class AuthController {
   }
 
   @Get('me')
-  @ApiOperation({ summary: 'Get current user info from token' })
+  @ApiOperation({summary: 'Get current user info from token'})
   @ApiResponse({
     status: 200,
     description: 'User information'
@@ -60,16 +61,10 @@ export class AuthController {
     status: 401,
     description: 'Invalid token'
   })
-  getUserInfo(@Body('token') token: string): Observable<IAuthUser> {
-    return this.authService.getUserInfo$(token).pipe(
-      catchError(error => {
-        return throwError(() =>
-          new HttpException(
-            'Invalid token',
-            HttpStatus.UNAUTHORIZED
-          )
-        );
-      })
-    );
+  getUserInfo(@Req() req: AuthRequest): IAuthMe {
+    return {
+      uid: req.user.uid,
+      email: req.user.email ?? '',
+    };
   }
 }

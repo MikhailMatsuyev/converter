@@ -6,7 +6,13 @@
 <!-- * * * * * * * * * Delete the template below * * * * * * * * * -->
 <!-- * * * * * * * to get started with your project! * * * * * * * -->
 <!-- * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * -->
+================
+{{ firebaseAuth.app.options.projectId }}
+================
+<pre>{{ auth.user$ | async | json }}</pre>
+===============
 
+<button (click)="req()">request!!!!!!!!!!</button>
 <style>
   :host {
     --bright-blue: oklch(51.01% 0.274 263.83);

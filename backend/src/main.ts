@@ -8,12 +8,13 @@ import { tap, catchError, switchMap, map } from 'rxjs/operators';
 import { INestApplication } from '@nestjs/common/interfaces/nest-application.interface';
 import { ExpressAdapter } from '@nestjs/platform-express';
 import express from 'express';
+import { getFirebaseAdmin } from "./firebase-admin/firebase-admin.config";
 
 // Правильные типы
 const createNestApp$ = (): Observable<INestApplication> => {
   const logger = new Logger('NestFactory');
   const server = express();
-  
+
   return from(NestFactory.create<INestApplication>(
     AppModule,
     new ExpressAdapter(server)
@@ -29,11 +30,11 @@ const createNestApp$ = (): Observable<INestApplication> => {
 // Типизированная настройка Swagger
 const setupSwagger$ = (app: INestApplication): Observable<void> => {
   const logger = new Logger('Swagger');
-  
+
   return new Observable<void>(observer => {
     try {
       logger.log('📚 Configuring Swagger documentation...');
-      
+
       const config = new DocumentBuilder()
         .setTitle('AI File Processor API')
         .setDescription('Реактивное REST API для обработки файлов с ИИ')
@@ -51,7 +52,7 @@ const setupSwagger$ = (app: INestApplication): Observable<void> => {
         .build();
 
       const document = SwaggerModule.createDocument(app, config, {
-        operationIdFactory: (controllerKey: string, methodKey: string) => 
+        operationIdFactory: (controllerKey: string, methodKey: string) =>
           `${controllerKey.replace('Controller', '')}.${methodKey}`
       });
 
@@ -94,11 +95,16 @@ const setupSwagger$ = (app: INestApplication): Observable<void> => {
 // Типизированный запуск сервера
 const startServer$ = (app: INestApplication): Observable<{ app: INestApplication; url: string }> => {
   const logger = new Logger('Server');
-  
+
   return new Observable<{ app: INestApplication; url: string }>(observer => {
     const port = process.env.PORT || 3000;
     const host = '0.0.0.0';
-    
+
+    app.enableCors({
+      origin: 'http://localhost:4200',
+      credentials: true,
+    });
+
     app.listen(port, host)
       .then(() => {
         const url = `http://${host === '0.0.0.0' ? 'localhost' : host}:${port}`;
@@ -111,15 +117,15 @@ const startServer$ = (app: INestApplication): Observable<{ app: INestApplication
   }).pipe(
     tap(({ url }) => {
       const banner = `
-╔══════════════════════════════════════════════════════════╗
-║                    AI FILE PROCESSOR                     ║
-║                    REACTIVE API v1.0                     ║
-╟──────────────────────────────────────────────────────────╢
-║  🚀 Server:    ${url.padEnd(39)}║
-║  📅 Started:   ${new Date().toLocaleString().padEnd(39)}║
-╚══════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════╗
+║                    AI FILE PROCESSOR                                     ║
+║                    REACTIVE API v1.0                                     ║
+╟──────────────────────────────────────────────────────────────────────────╢
+║  🚀 Server:    ${url.padEnd(39)}                               ║
+║  📅 Started:   ${new Date().toLocaleString().padEnd(39)}       ║
+╚══════════════════════════════════════════════════════════════════════════╝
       `.trim();
-      
+
       logger.log(`\n${banner}\n`);
     }),
     catchError((error: Error) => {
@@ -136,18 +142,24 @@ interface BootstrapResult {
 }
 
 const bootstrap$: Observable<BootstrapResult> = createNestApp$().pipe(
-  switchMap((app: INestApplication) => 
+  tap(() => {
+    // 🔥 ИНИЦИАЛИЗАЦИЯ FIREBASE ADMIN (ОДИН РАЗ ПРИ СТАРТЕ)
+    getFirebaseAdmin();
+    const logger = new Logger('Firebase');
+    logger.log('🔥 Firebase Admin initialized');
+  }),
+  switchMap((app: INestApplication) =>
     forkJoin([
       setupSwagger$(app),
       of(app)
     ])
   ),
-  switchMap(([, app]: [void, INestApplication]) => 
+  switchMap(([, app]: [void, INestApplication]) =>
     startServer$(app)
   ),
   tap(({ app, url }: BootstrapResult) => {
     const logger = new Logger('Bootstrap');
-    
+
     // Типизированные настройки CORS
     app.enableCors({
       origin: [
@@ -159,10 +171,10 @@ const bootstrap$: Observable<BootstrapResult> = createNestApp$().pipe(
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
       allowedHeaders: ['Content-Type', 'Authorization', 'X-API-KEY']
     });
-    
+
     logger.log(`🎉 Application bootstrap completed successfully!`);
     logger.log(`🔗 Base URL: ${url}`);
-    
+
     // Типизированный graceful shutdown
     const gracefulShutdown = (signal: string): void => {
       logger.log(`\n⚠️  Received ${signal}. Gracefully shutting down...`);
@@ -176,7 +188,7 @@ const bootstrap$: Observable<BootstrapResult> = createNestApp$().pipe(
           process.exit(1);
         });
     };
-    
+
     process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
     process.on('SIGINT', () => gracefulShutdown('SIGINT'));
   }),

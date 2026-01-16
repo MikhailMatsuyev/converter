@@ -1,0 +1,26 @@
+<!doctype html>
+<html>
+<body>
+<h2>Firebase Token</h2>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCnAjEUNqOfwXd-ZbaMWxLG2elZItlWNZE",
+        authDomain: "ai-file-processor-8d09e.firebaseapp.com",
+        projectId: "ai-file-processor-8d09e",
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+
+    const token = await result.user.getIdToken();
+    document.body.innerHTML += `<pre>${token}</pre>`;
+</script>
+</body>
+</html>

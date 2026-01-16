@@ -23,8 +23,8 @@ describe('AuthController (e2e)', () => {
     ),
     getUserInfo$: jest.fn().mockReturnValue(
       of({
-        uid: 'test-user-id',
-        email: 'test@example.com',
+        uid: 'test-user',
+        email: 'test@test.com',
       }),
     ),
   };
@@ -66,8 +66,8 @@ describe('AuthController (e2e)', () => {
       .expect(200);
 
     expect(res.body).toEqual({
-      uid: 'test-user-id',
-      email: 'test@example.com',
+      uid: 'test-user',
+      email: 'test@test.com',
     });
   });
 });

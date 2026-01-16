@@ -11,5 +11,8 @@
         "tsconfig": "tsconfig.spec.json"
       }
     ]
+  },
+  "moduleNameMapper": {
+    "^@shared/(.*)$": "<rootDir>/../shared/src/$1"
   }
 }
