@@ -6,15 +6,16 @@ import {
   HttpStatus,
   UnauthorizedException,
   Get,
-  HttpCode, Req
+  HttpCode
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { AuthRequest, IAuthMe, IAuthResponse, IAuthUser } from '@shared/interfaces';
+import { IAuthMe, IAuthResponse } from '@shared/interfaces';
 import { Public } from "../security/public.decorator";
+import { CurrentUser } from "../security/current-user.decorator";
 
 @ApiTags('auth')
 @Controller('auth')
@@ -61,10 +62,7 @@ export class AuthController {
     status: 401,
     description: 'Invalid token'
   })
-  getUserInfo(@Req() req: AuthRequest): IAuthMe {
-    return {
-      uid: req.user.uid,
-      email: req.user.email ?? '',
-    };
+  getUserInfo(@CurrentUser() user: IAuthMe): IAuthMe {
+    return user;
   }
 }

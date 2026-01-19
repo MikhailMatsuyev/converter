@@ -22,7 +22,8 @@
     "tree:simple": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Simple",
     "tree:backend": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./backend",
     "tree:frontend": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./frontend",
-    "tree:shared": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./shared"
+    "tree:shared": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./shared",
+    "firebase-login+auth|me": "node scripts/login.js"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

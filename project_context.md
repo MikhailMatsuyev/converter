@@ -436,15 +436,15 @@ Shared публикует типы: "main": "dist/index.js", "types": "dist/inde
 
 
 
-Задачи на 17012026
+Задачи на 20012026
 ЧТО ДЕЛАЕМ ЗАВТРА (ЛОГИЧНЫЙ ПЛАН)
 🔹 1️⃣ Убрать @Req() → сделать красиво
 
 @CurrentUser() decorator
 
 типизированный доступ к пользователю
-
-getMe(@CurrentUser() user: IAuthMe)
+ 
+getMe(@CurrentUser() user: IAuthMe) СДЕЛАНО !!!
 
 🔹 2️⃣ Mapper Firebase → Domain
 
@@ -452,7 +452,8 @@ getMe(@CurrentUser() user: IAuthMe)
 
 единая точка преобразования
 
-mapFirebaseUser(decoded: DecodedIdToken): IAuthMe
+mapFirebaseUser(decoded: DecodedIdToken): IAuthMe СДЕЛАНО !!!
+
 
 🔹 3️⃣ Привязка к бизнес-логике
 
@@ -521,11 +522,9 @@ New-Item backend/cloudbuild.yaml -Type File
 New-Item firebase/storage.rules -Type File
 New-Item firebase/firebase.json -Type File
 
-Планы на 6.01.26
+Планы на 20.01.26
 
 «Продолжаем с Firebase JWT Guard»
-
-ПЛАН НА СЛЕДУЮЩУЮ СЕССИЮ (ЗАВТРА)
 
 
 Завтра можем спокойно, без авралов, пройтись по плану:
