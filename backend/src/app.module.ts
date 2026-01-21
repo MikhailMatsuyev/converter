@@ -7,9 +7,10 @@ import { APP_GUARD } from "@nestjs/core";
 import { FirebaseAuthGuard } from "./security/firebase-auth.guard";
 import { FirebaseModule } from "./firebase/firebase.module";
 import { FilesModule } from "./files/files.module";
+import { UsersModule } from "./users/users.module";
 
 @Module({
-  imports: [AuthModule, FirebaseModule, FilesModule],
+  imports: [AuthModule, FirebaseModule, FilesModule, UsersModule],
   controllers: [AppController, HealthController],
   providers: [
     AppService,
