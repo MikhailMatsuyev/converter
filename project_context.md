@@ -370,8 +370,8 @@ Shared публикует типы: "main": "dist/index.js", "types": "dist/inde
 
 ### Frontend (Angular):
 - [x] Установить Firebase SDK: `npm install firebase`
-- [ ] Создать сервис: `ng g service services/auth`
-- [ ] Создать компонент Login: `ng g component pages/login`
+- [х] Создать сервис: `ng g service services/auth`
+- [x] Создать компонент Login: `ng g component pages/login`
 - [ ] Настроить Firebase конфиг из `firebase-config.txt`
 - [ ] Реализовать Google Sign-in
 

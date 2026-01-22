@@ -107,4 +107,4 @@ Write-Host ""
 # Запуск Angular
 Set-Location $FRONTEND_DIR
 Write-Host "Starting Angular..." -ForegroundColor Gray
-ng serve --open --host localhost
+ng serve --open --host localhost --configuration=development

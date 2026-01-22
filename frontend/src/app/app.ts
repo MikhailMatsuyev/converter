@@ -5,12 +5,12 @@ import { AsyncPipe, JsonPipe } from '@angular/common';
 import firebase from 'firebase/compat/app';
 import { AuthFacade } from './auth/auth.facade';
 import { HttpClient } from '@angular/common/http';
-
-
+import { LoginComponent } from './auth/login/login.component';
+import { environment } from '../environments/environment';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, AsyncPipe, JsonPipe],
+  imports: [RouterOutlet, AsyncPipe, JsonPipe, LoginComponent],
   templateUrl: './app.html',
   styleUrl: './app.scss'
 })
@@ -31,7 +31,7 @@ export class App {
   }
 
   req(): void {
-    this.http.get('http://localhost:3000/auth/me').subscribe({
+    this.http.get(`${environment.apiUrl}/auth/me`).subscribe({
       next: (res) => console.log('ME:', res),
       error: (err) => console.error('ERROR:', err),
     });

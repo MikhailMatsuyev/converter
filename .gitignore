@@ -153,3 +153,4 @@ firebase-config.txt
 
 # Временные файлы
 shared/tsconfig.tsbuildinfo
+/firebase-infra/ai-file-processor-8d09e-firebase-adminsdk-fbsvc-a400f84199.json

@@ -19,6 +19,9 @@ export function getFirebaseAdmin() {
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
     hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY,
   });
+    console.log(
+      process.env.FIREBASE_PRIVATE_KEY?.startsWith('-----BEGIN')
+    );
 
   app = admin.initializeApp({
     credential: admin.credential.cert({
