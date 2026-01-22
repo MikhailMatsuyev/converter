@@ -18,7 +18,7 @@
     "dev:all": "concurrently \"npm run dev:shared\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "install:all": "cd shared && npm install && cd ../backend && npm install && cd ../frontend && npm install",
     "build:all": "cd shared && npm run build && cd ../backend && npx tsc --build && cd ../frontend && ng build",
-    "tree:all": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -All",
+    "tree-and-stack:all": "node scripts/wrapper-get-project-tree-structure-and-libs-version-in-docker.js",
     "tree:docker": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -DockerOnly",
     "tree:simple": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Simple",
     "tree:backend": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./backend",
