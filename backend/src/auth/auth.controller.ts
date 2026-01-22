@@ -13,7 +13,7 @@ import { LoginDto } from './dto/login.dto';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { IAuthMe, IAuthResponse } from '@shared/interfaces';
+import type { IAuthMe, IAuthResponse } from '@shared/interfaces';
 import { Public } from "../security/public.decorator";
 import { CurrentUser } from "../security/current-user.decorator";
 

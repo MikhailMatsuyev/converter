@@ -34,6 +34,20 @@ Write-Host "  Using: docker-compose.dev.yml" -ForegroundColor Green
 Write-Host "`n[1/3] Starting Docker services..." -ForegroundColor Green
 Set-Location $PROJECT_ROOT
 
+# -----------------------
+# Генерация Prisma
+# -----------------------
+Write-Host "Generating Prisma Client..." -ForegroundColor Cyan
+Set-Location "$PROJECT_ROOT/backend"
+try {
+    npx prisma generate
+    Write-Host "Prisma Client generated successfully" -ForegroundColor Green
+} catch {
+    Write-Host "Failed to generate Prisma Client" -ForegroundColor Red
+    exit 1
+}
+Set-Location $PROJECT_ROOT
+
 # Останавливаем старые контейнеры (оба варианта для очистки)
 Write-Host "  Stopping old containers..." -ForegroundColor Gray
 docker-compose -f $COMPOSE_FILE down 2>$null | Out-Null

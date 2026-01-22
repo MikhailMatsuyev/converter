@@ -1,47 +1,32 @@
-FROM node:20-alpine
+FROM node:20
 
-# 1. Системные зависимости с очисткой кэша
-RUN apk update && \
-    apk add --no-cache --virtual .build-deps \
-    python3 \
-    make \
-    g++ \
-    && rm -rf /var/cache/apk/*
+# 1. Системные зависимости
+RUN apt-get update && \
+    apt-get install -y python3 make g++ && \
+    rm -rf /var/lib/apt/lists/*
 
 # 2. Рабочая директория
-# WORKDIR /app/backend
 WORKDIR /app
 
-# 3. Копируем только package.json (для кэширования слоя)
-# COPY backend/package*.json ./
+# 3. Копируем package.json для кэширования слоя
 COPY package.json ./
-COPY shared/package.json ./shared/
-COPY backend/package.json ./backend/
+COPY backend/package*.json ./backend/
+COPY shared/package*.json ./shared/
 
-
-# 4. Чистая установка с очисткой кэша
-RUN npm cache clean --force && \
-    npm config set fetch-retry-maxtimeout 600000 && \
-    npm config set fetch-retry-mintimeout 100000 && \
-    # npm install --legacy-peer-deps --verbose && \
-    npm install --legacy-peer-deps --workspaces --verbose && \
-    npm cache clean --force
-
-# 5. Устанавливаем глобальные утилиты
+# 4. Глобальные утилиты
 RUN npm install -g @nestjs/cli
 
-# 6. Копируем исходники
-COPY shared/ ./shared/
-COPY backend/ ./backend/
+# 5. Копируем исходники и entrypoint
+COPY ./shared ./shared
+COPY ./backend ./backend
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# 7. Копируем shared
-#WORKDIR /app
-#COPY shared/ ./shared/
-# RUN cd shared && npm install && npm run build
-RUN cd shared && npm run build
-
-# 8. Возвращаемся в backend
+# 6. Рабочая директория для backend
 WORKDIR /app/backend
 
-# 9. Команда запуска
-CMD ["npm", "run", "start:dev"]
+# 7. Используем entrypoint
+COPY ./entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+WORKDIR /app/backend

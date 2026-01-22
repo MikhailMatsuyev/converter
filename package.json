@@ -8,6 +8,8 @@
   ],
   "scripts": {
     "start:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/start_dev_docker-all_only-front-local.ps1",
+    "backend:logs": "docker-compose -f docker-compose.dev.yml logs backend -f",
+    "prisma:pull": "docker exec -it nest-backend-dev npx prisma db pull --config src/prisma/prisma.config.ts",
     "start:build-docker": "cd E:\\project\\converter && docker-compose build --no-cache backend",
     "docker:down": "cd E:\\project\\converter && docker-compose down",
     "dev:shared": "cd shared && npm run watch",
@@ -16,7 +18,6 @@
     "dev:all": "concurrently \"npm run dev:shared\" \"npm run dev:backend\" \"npm run dev:frontend\"",
     "install:all": "cd shared && npm install && cd ../backend && npm install && cd ../frontend && npm install",
     "build:all": "cd shared && npm run build && cd ../backend && npx tsc --build && cd ../frontend && ng build",
-    "tree": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1",
     "tree:all": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -All",
     "tree:docker": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -DockerOnly",
     "tree:simple": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Simple",

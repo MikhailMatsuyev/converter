@@ -1,13 +1,21 @@
-// auth-mapper.ts
-import { DecodedIdToken } from 'firebase-admin/lib/auth/token-verifier';
-import { IAuthMe } from '@shared/interfaces';
+import { getAuth, DecodedIdToken } from 'firebase-admin/auth';
+import type { IAuthMe } from '@shared/interfaces';
+import { from, Observable } from 'rxjs';
+import { map } from 'rxjs/operators';
 
 export class AuthMapper {
-  // Преобразуем DecodedIdToken в IAuthMe
-  static toDomain(token: DecodedIdToken): IAuthMe {
-    return {
-      uid: token.uid,
-      email: token.email ?? '',
-    };
+  /**
+   * Преобразуем ID токен в IAuthMe в реактивном стиле
+   * @param idToken Firebase ID токен
+   */
+  static toDomain(idToken: string): Observable<IAuthMe> {
+    const auth = getAuth();
+
+    return from(auth.verifyIdToken(idToken)).pipe(
+      map((decoded: DecodedIdToken) => ({
+        uid: decoded.uid,
+        email: decoded.email ?? '',
+      }))
+    );
   }
 }

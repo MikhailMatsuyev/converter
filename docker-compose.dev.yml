@@ -25,10 +25,18 @@ services:
       # Hot reload
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
+    entrypoint: ["/entrypoint.sh"]
     volumes:
       # Исходный код
       - ./backend:/app/backend
       - ./shared:/app/shared
+      # node_modules контейнера остаются внутри контейнера
+      - /app/backend/node_modules
+      - /app/shared/node_modules
+      # Явное монтирование директории prisma
+      - ./backend/src/prisma:/app/backend/src/prisma
+      # - /app/backend/node_modules
+      # - /app/shared/node_modules
       # Конфигурационные файлы
       #- ./backend/package.json:/app/backend/package.json
       # - ./shared/package.json:/app/shared/package.json
@@ -40,7 +48,7 @@ services:
       # - /app/backend/node_modules
       # - /app/shared/node_modules
     # sh -c "cd /app/backend && npm run start:dev"
-    command: sh -c "cd /app/shared && npm run build && cd /app/backend && npm run start:dev"
+    # command: sh -c "cd /app/shared && npm run build && cd /app/backend && npm run start:dev"
     restart: unless-stopped
     depends_on:
       db:
