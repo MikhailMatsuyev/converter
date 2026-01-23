@@ -154,3 +154,8 @@ firebase-config.txt
 # Временные файлы
 shared/tsconfig.tsbuildinfo
 /firebase-infra/ai-file-processor-8d09e-firebase-adminsdk-fbsvc-a400f84199.json
+/shared/src/enums/file-status.enum.d.ts
+/shared/src/constants/index.d.ts
+/shared/src/enums/index.d.ts
+/shared/src/constants/user-limits.d.ts
+/shared/src/enums/user-type.enum.d.ts
