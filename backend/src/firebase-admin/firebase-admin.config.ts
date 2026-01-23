@@ -13,6 +13,7 @@ export function getFirebaseAdmin() {
   // }
 
   if (admin.apps.length === 0) {
+    console.log('🔥 Firebase Storage bucket:', process.env.FIREBASE_STORAGE_BUCKET);
   console.log('🔥 Firebase init called===========8989==');
   console.log({
     projectId: process.env.FIREBASE_PROJECT_ID,
@@ -29,6 +30,7 @@ export function getFirebaseAdmin() {
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
     }),
+    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
   })
   } else {
     app = admin.app();

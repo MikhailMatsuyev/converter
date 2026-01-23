@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { IUser } from "@shared/interfaces/user.interface";
+import { UserType } from "@shared/enums";
 
 
 @Injectable()
@@ -29,6 +30,7 @@ export class UsersRepository {
       createdAt: now,
       updatedAt: now,
       storageQuota: user.storageQuota ?? 1024 * 1024 * 1024, // 1GB по умолчанию
+      type: user.type ?? UserType.FREE,
       usedStorage: user.usedStorage ?? 0,
     };
     this.users.push(newUser);

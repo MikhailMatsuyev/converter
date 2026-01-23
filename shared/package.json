@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc --build --clean && tsc",
     "watch": "tsc --watch",
     "prepublishOnly": "npm run build",
     "clean": "rm -rf dist"
@@ -55,6 +55,14 @@
     "./frontend": {
       "types": "./dist/frontend/index.d.ts",
       "default": "./dist/frontend/index.d.ts"
+    },
+    "./constants": {
+      "types": "./dist/constants/index.d.ts",
+      "default": "./dist/constants/index.d.ts"
+    },
+    "./enums": {
+      "types": "./dist/enums/index.d.ts",
+      "default": "./dist/enums/index.d.ts"
     }
   }
 }

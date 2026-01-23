@@ -7,7 +7,6 @@
     "backend"
   ],
   "scripts": {
-
     "start:dev": "powershell -ExecutionPolicy Bypass -File ./scripts/start_dev_docker-all_only-front-local.ps1",
     "backend:logs": "docker-compose -f docker-compose.dev.yml logs backend -f",
     "prisma:pull": "docker exec -it nest-backend-dev npx prisma db pull --config src/prisma/prisma.config.ts",

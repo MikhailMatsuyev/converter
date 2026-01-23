@@ -1,12 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { UsersRepository } from './users.repository';
-import { IUser } from '@shared/interfaces/user.interface';
+// import { IUser, UserType } from '/sh../../interfaces/user.interface';
+import { IUser } from '@shared/interfaces';
 import { Observable, of } from 'rxjs';
-import { map } from 'rxjs/operators';
+import { UserType } from "@shared/enums";
 
 @Injectable()
 export class UsersService {
-  constructor(private readonly usersRepository: UsersRepository) {}
+  constructor(private readonly usersRepository: UsersRepository) {
+  }
 
   findByFirebaseUid(uid: string): Observable<IUser | null> {
     const user = this.usersRepository.findByFirebaseUid(uid);
@@ -18,12 +20,14 @@ export class UsersService {
     email?: string;
     displayName?: string | null;
     photoURL?: string | null;
+    type?: UserType;
   }): Observable<IUser> {
     const newUser = this.usersRepository.create({
       uid: data.uid,
       email: data.email,
       displayName: data.displayName ?? null,
       photoURL: data.photoURL ?? null,
+      type: data.type ?? UserType.FREE, // по умолчанию Free
     });
     return of(newUser);
   }
@@ -41,6 +45,29 @@ export class UsersService {
   deleteUser(id: string): Observable<boolean> {
     const deleted = this.usersRepository.delete(id);
     return of(deleted);
+  }
+
+  /** Получение количества операций за сегодня */
+  getTodayUploadCount(uid: string): Observable<number> {
+    const user = this.usersRepository.findByFirebaseUid(uid);
+    if (!user) return of(0);
+    // Пример: считаем по массиву uploadHistory с timestamp
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const countToday = (user.uploadHistory ?? []).filter(
+      t => new Date(t).getTime() >= today.getTime()
+    ).length;
+    return of(countToday);
+  }
+
+  /** Сохраняем факт загрузки для лимитов */
+  recordUpload(uid: string): Observable<void> {
+    const user = this.usersRepository.findByFirebaseUid(uid);
+    if (!user) return of(void 0);
+    user.uploadHistory = user.uploadHistory ?? [];
+    user.uploadHistory.push(new Date().toISOString());
+    this.usersRepository.update(user.id, {uploadHistory: user.uploadHistory});
+    return of(void 0);
   }
 }
 

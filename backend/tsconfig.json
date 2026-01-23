@@ -26,7 +26,9 @@
       "@shared/*": ["../shared/src/*"],
       "@shared/backend/*": ["../shared/src/backend/*"],
       "@shared/frontend/*": ["../shared/src/frontend/*"],
-      "@shared/interfaces/*": ["../shared/src/interfaces/*"]
+      "@shared/interfaces/*": ["../shared/src/interfaces/*"],
+      "@shared/enums/*": ["../shared/src/enums/*"],
+      "@shared/constants/*": ["../shared/src/constants/*"]
     }
   },
   "ts-node": {

@@ -1,4 +1,5 @@
 import { IUser } from "@shared/interfaces/user.interface";
+import { UserType } from "@shared/enums";
 
 
 export class UserEntity implements IUser {
@@ -10,6 +11,7 @@ export class UserEntity implements IUser {
   createdAt: Date;
   updatedAt: Date;
   storageQuota: number;
+  type: UserType;
   usedStorage: number;
 
   constructor(data: Partial<IUser>) {
@@ -22,6 +24,7 @@ export class UserEntity implements IUser {
     this.createdAt = data.createdAt ?? now;
     this.updatedAt = data.updatedAt ?? now;
     this.storageQuota = data.storageQuota ?? 1024 * 1024 * 1024; // 1GB по умолчанию
+    this.type = data.type ?? UserType.FREE;
     this.usedStorage = data.usedStorage ?? 0;
   }
 }

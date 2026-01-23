@@ -25,6 +25,7 @@ services:
       # Hot reload
       CHOKIDAR_USEPOLLING: "true"
       WATCHPACK_POLLING: "true"
+      FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET}
     entrypoint: ["/entrypoint.sh"]
     volumes:
       # Исходный код

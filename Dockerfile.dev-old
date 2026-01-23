@@ -16,17 +16,6 @@ COPY shared/package*.json ./shared/
 # 4. Глобальные утилиты
 RUN npm install -g @nestjs/cli
 
-# 4.1. Устанавливаем зависимости проекта
-WORKDIR /app/backend
-
-# Удаляем старую сборку
-RUN rm -rf dist
-
-# Удаляем старую сборку и node_modules (если вдруг что-то осталось)
-RUN rm -rf dist node_modules
-
-RUN npm install
-
 # 5. Копируем исходники и entrypoint
 COPY ./shared ./shared
 COPY ./backend ./backend

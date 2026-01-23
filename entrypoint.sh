@@ -4,7 +4,7 @@ set -e
 echo "🚀 Запуск entrypoint..."
 
 # Переходим в директорию backend
-cd /app/backend
+# cd /app/backend
 
 echo "📦 Проверяем зависимости..."
 
@@ -24,4 +24,5 @@ echo "🔧 Генерация Prisma Client..."
 npx prisma generate --schema=src/prisma/schema.prisma
 
 echo "🚀 Запуск NestJS в режиме разработки..."
-exec npm run start:dev
+npm run build
+exec node dist/main.js
