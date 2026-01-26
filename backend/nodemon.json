@@ -10,7 +10,7 @@
     "dist",
     "node_modules"
   ],
-  "exec": "nest start --watch",
+  "exec": "ts-node -r tsconfig-paths/register src/main.ts",
   "execMap": {
     "ts": "node --require ts-node/register"
   },

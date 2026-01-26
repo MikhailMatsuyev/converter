@@ -1,17 +1,25 @@
 import { Injectable, ForbiddenException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
-import { getStorage } from 'firebase-admin/storage';
 import { UsersService } from '../users/users.service';
 import { from, of, switchMap, map, catchError } from 'rxjs';
 import { ALLOWED_FILE_EXTENSIONS, USER_DAILY_LIMITS, USER_FILE_SIZE_LIMITS_MB } from "@shared/constants";
 import { UserType } from "@shared/enums";
-// import { UserType } from '@shared/enums/user-type.enum';
-// import { ALLOWED_FILE_EXTENSIONS, USER_DAILY_LIMITS, USER_FILE_SIZE_LIMITS_MB } from '@shared/constants/user-limits';
+import { getFirebaseAdmin } from "../firebase-admin/firebase-admin.config";
 
 @Injectable()
 export class FilesService {
-  private bucket = getStorage().bucket();
+  private bucket: any;
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService) {
+    const admin = getFirebaseAdmin();
+    const bucketName = process.env.FIREBASE_STORAGE_BUCKET?.trim();
+
+    if (!bucketName) {
+      throw new Error('FIREBASE_STORAGE_BUCKET is not set!');
+    }
+
+    this.bucket = admin.storage().bucket(bucketName);
+    console.log('🔥 Firebase bucket instance created:', this.bucket.name);
+  }
 
   uploadFile(file: Express.Multer.File, uid: string) {
     // 1️⃣ Проверка формата файла

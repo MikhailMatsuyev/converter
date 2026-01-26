@@ -12,6 +12,7 @@
     "prisma:pull": "docker exec -it nest-backend-dev npx prisma db pull --config src/prisma/prisma.config.ts",
     "start:build-docker": "cd E:\\project\\converter && docker-compose build --no-cache backend",
     "docker:down": "cd E:\\project\\converter && docker-compose down",
+    "clean:docker:win": "powershell -Command \"Write-Host '⚠️ Это удалит все контейнеры, образы и неиспользуемые тома! Продолжить? (Y/N)'; $ans = Read-Host; if ($ans -eq 'Y') { docker stop $(docker ps -aq) | Out-Null; docker rm $(docker ps -aq) | Out-Null; Write-Host 'Удалить все образы? (Y/N)'; $ans_img = Read-Host; if ($ans_img -eq 'Y') { docker rmi $(docker images -q) -f | Out-Null }; Write-Host 'Удалить неиспользуемые тома? (Y/N)'; $ans_vol = Read-Host; if ($ans_vol -eq 'Y') { docker volume prune -f | Out-Null }; docker builder prune -f | Out-Null; Write-Host 'Очистка завершена!' } else { Write-Host 'Отмена.' }\"",
     "dev:shared": "cd shared && npm run watch",
     "dev:backend": "cd backend && npm run start:dev",
     "dev:frontend": "cd frontend && ng serve",
