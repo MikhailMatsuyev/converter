@@ -1,28 +1,40 @@
-// shared/src/constants/user-limits.ts
 import { UserType } from '../enums';
+import { FileExtensions } from './upload-limits';
 
 export const USER_DAILY_LIMITS: Record<UserType, number> = {
-  [UserType.FREE]: 5,   // операций в день
-  [UserType.PAID]: 50,  // операций в день
+  [UserType.FREE]: 5,
+  [UserType.PAID]: 50,
 };
 
-export const USER_FILE_SIZE_LIMITS_MB: Record<UserType, Record<string, number>> = {
+// Используем enum FileExtensions вместо строк
+export const USER_FILE_SIZE_LIMITS_MB: Record<UserType, Record<FileExtensions, number>> = {
   [UserType.FREE]: {
-    pdf: 10,
-    jpg: 5,
-    jpeg: 5,
-    png: 5,
-    heic: 5,
+    [FileExtensions.PDF]: 10,
+    [FileExtensions.JPG]: 5,
+    [FileExtensions.JPEG]: 5,
+    [FileExtensions.PNG]: 5,
+    [FileExtensions.HEIC]: 5,
   },
   [UserType.PAID]: {
-    pdf: 100,
-    jpg: 50,
-    jpeg: 50,
-    png: 50,
-    heic: 50,
+    [FileExtensions.PDF]: 100,
+    [FileExtensions.JPG]: 50,
+    [FileExtensions.JPEG]: 50,
+    [FileExtensions.PNG]: 50,
+    [FileExtensions.HEIC]: 50,
   },
 };
 
-export const ALLOWED_FILE_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'heic'];
-export const MAX_FILE_SIZE_MB = 100;
-export const MAX_FILES_PER_REQUEST = 10;
+// Вспомогательная функция для получения лимита
+export function getUserFileSizeLimit(userType: UserType, extension: FileExtensions): number {
+  return USER_FILE_SIZE_LIMITS_MB[userType][extension];
+}
+
+// Функция для валидации лимита
+export function validateFileSizeLimit(
+  userType: UserType,
+  extension: FileExtensions,
+  fileSizeMB: number
+): boolean {
+  const limit = getUserFileSizeLimit(userType, extension);
+  return fileSizeMB <= limit;
+}

@@ -1,0 +1,4 @@
+curl.exe -X POST http://localhost:3000/files/upload-multiple -F "files=@files-for-test/test-valid-61.jpg"
+curl.exe -X POST http://localhost:3000/files/upload-multiple -F "files=@files-for-test/test.html"
+curl.exe -X POST http://localhost:3000/files/upload-multiple -F "files=@files-for-test/test.html"
+curl.exe -X POST http://localhost:3000/files/upload-multiple -F "files=@files-for-test/test-valid-61.jpg" -F "files=@files-for-test/test-empty.jpg"
