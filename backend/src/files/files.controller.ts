@@ -1,19 +1,23 @@
-import { Controller, Post, UploadedFiles, UseInterceptors, Req, BadRequestException } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  UploadedFiles,
+  UseInterceptors,
+  Req,
+  BadRequestException,
+  UnauthorizedException
+} from '@nestjs/common';
 import { FilesService } from './files.service';
-// import { FilesInterceptor } from '@nestjs/platform-express';
-// import { Request } from 'express';
 import { ApiConsumes, ApiBody, ApiTags } from '@nestjs/swagger';
-// import { MAX_FILES_PER_REQUEST } from "@ai-file-processor/shared/constants";
 import type { Request } from 'express';
 import { FilesUploadInterceptor } from "./files.interceptor";
 import { UploadFilesDto } from "../auth/dto/upload-files.dto";
 import { forkJoin } from "rxjs";
 import { map } from "rxjs/operators";
 import { UserType } from "@shared/enums";
-
-/*-class UploadFilesDto {
-  files: any[];
-}*/
+import { FileUser, RequestUser } from "@shared/types/request-user.type";
+import { v4 as uuidv4 } from 'uuid';
+import { toFileUser } from "@shared/utils";
 
 @ApiTags('files')
 @Controller('files')
@@ -29,11 +33,24 @@ export class FilesController {
   @UseInterceptors(FilesUploadInterceptor('files', 10))
   uploadMultipleFiles(@UploadedFiles() files: Express.Multer.File[], @Req() req: Request) {
     console.log('---(req as any).user---', (req as any).user);
-    const user = (req as any).user
-      ? { uid: (req as any).user.uid, type: (req as any).user.type as UserType || UserType.FREE}
-      : { uid: 'guest', type: UserType.FREE }; // для гостей можно задать Free или отдельный тип
 
-    // console.log('---FILES---', files);
+    const authUser = (req as any).user;
+
+    const user: RequestUser = authUser
+      ? {
+        isAuthenticated: true,
+        uid: authUser.uid,
+        type: authUser.type ?? UserType.USER,
+        isPaid: authUser.isPaid ?? false,
+      }
+      : {
+        isAuthenticated: false,
+        type: UserType.GUEST,
+        isPaid: false,
+        guestId: req.headers["x-guest-id"] as string || uuidv4(),
+      };
+
+    console.log('---FILES---', files);
     // console.log('---REQ BODY---', req.body);
     // console.log('---UID---', (req as any).user?.uid || 'guest');
     if (!files || files.length === 0) {
@@ -42,12 +59,13 @@ export class FilesController {
 
     console.log('---user---', user);
     // Обрабатываем каждый файл через сервис
+    // const fileUser: FileUser = toFileUser(user); // requestUser типа RequestUser
+
+    const fileUser: FileUser = toFileUser(user);
     return forkJoin(
-      files.map(file => this.filesService.uploadFile(file, user))
+      files.map(file => this.filesService.uploadFile(file, fileUser))
     ).pipe(
-      map(results => {
-        return results;
-      })
+      map(results => results)
     );
   }
 

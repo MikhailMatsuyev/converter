@@ -24,7 +24,7 @@ export class UserEntity implements IUser {
     this.createdAt = data.createdAt ?? now;
     this.updatedAt = data.updatedAt ?? now;
     this.storageQuota = data.storageQuota ?? 1024 * 1024 * 1024; // 1GB по умолчанию
-    this.type = data.type ?? UserType.FREE;
+    this.type = data.type ?? UserType.USER;
     this.usedStorage = data.usedStorage ?? 0;
   }
 }

@@ -30,7 +30,7 @@ export class UsersRepository {
       createdAt: now,
       updatedAt: now,
       storageQuota: user.storageQuota ?? 1024 * 1024 * 1024, // 1GB по умолчанию
-      type: user.type ?? UserType.FREE,
+      type: user.type ?? UserType.USER,
       usedStorage: user.usedStorage ?? 0,
     };
     this.users.push(newUser);

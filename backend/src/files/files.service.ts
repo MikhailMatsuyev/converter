@@ -1,85 +1,111 @@
-import { Injectable, ForbiddenException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  BadRequestException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { UsersService } from '../users/users.service';
-import { from, of, switchMap, map, catchError } from 'rxjs';
-import { UserType } from "@shared/enums";
-import { getFirebaseAdmin } from "../firebase-admin/firebase-admin.config";
+import { from, of, switchMap, map, catchError, Observable } from 'rxjs';
 import { fileTypeFromBuffer } from 'file-type';
 import {
   FileExtensions,
   getAllowedMimeTypes,
   isAllowedExtension,
-  isAllowedMimeType
-} from "@shared/constants/upload-limits";
-import { USER_DAILY_LIMITS, USER_FILE_SIZE_LIMITS_MB } from "@shared/constants";
-import { ALLOWED_FILE_EXTENSIONS } from "@shared/constants";
-// import { ALLOWED_FILE_EXTENSIONS } from "@ai-file-processor/shared";
+  isAllowedMimeType,
+} from '@shared/constants/upload-limits';
+import { IUser } from '@shared/interfaces/user.interface';
+import { getFirebaseAdmin } from '../firebase-admin/firebase-admin.config';
+import { UserType } from "@shared/enums";
+import { getSubscriptionTier, SubscriptionTier, USER_DAILY_LIMITS, USER_FILE_SIZE_LIMITS_MB } from "@shared/constants";
 
+export type FileUser = IUser & { isPaid: boolean };
 
 @Injectable()
 export class FilesService {
   private bucket: any;
+  private guestUploads: Record<string, number> = {};
 
   constructor(private readonly usersService: UsersService) {
     const admin = getFirebaseAdmin();
     const bucketName = process.env.FIREBASE_STORAGE_BUCKET?.trim();
-
-    if (!bucketName) {
-      throw new Error('FIREBASE_STORAGE_BUCKET is not set!');
-    }
-
+    if (!bucketName) throw new Error('FIREBASE_STORAGE_BUCKET is not set!');
     this.bucket = admin.storage().bucket(bucketName);
-    console.log('🔥 Firebase bucket instance created:', this.bucket.name);
   }
 
-  uploadFile(file: Express.Multer.File, user: { uid: string; type: UserType }) {
+  uploadFile(file: Express.Multer.File, user: FileUser) {
     const ext = file.originalname.split('.').pop()?.toLowerCase() as FileExtensions;
     if (!ext || !isAllowedExtension(ext)) {
       throw new BadRequestException(
-        `Недопустимый формат файла. Допустимые: ${ALLOWED_FILE_EXTENSIONS.join(', ')}`
+        `Недопустимый формат файла. Допустимые: ${getAllowedMimeTypes().join(', ')}`
       );
     }
 
-    return from(
-      user.type !== UserType.FREE
-        ? this.usersService.findByFirebaseUid(user.uid)
-        : of(user) // гостевой пользователь — сразу передаем
-    ).pipe(
-      switchMap(foundUser => {
-        if (!foundUser) throw new ForbiddenException('Пользователь не найден');
+    const isGuest = !user.uid; // если нет uid, считаем гостем
+    const userId = isGuest ? 'guest-' + Math.random().toString(36).slice(2) : user.uid;
+    const isPaid = !!user.isPaid;
 
-        return from(this.usersService.getTodayUploadCount(foundUser.uid)).pipe(
+    // Для гостя формируем временный объект
+    const fileUser$: Observable<FileUser> = user.type !== UserType.GUEST
+      ? this.usersService.findByFirebaseUid(user.uid).pipe(
+        map(found => {
+          if (!found) throw new ForbiddenException('Пользователь не найден');
+          return { ...found, isPaid: user.isPaid } as FileUser;
+        })
+      )
+      : of({
+        id: 'guest-' + Date.now() + Math.random(),
+        uid: 'guest-' + Date.now() + Math.random(),
+        email: '',
+        displayName: null,
+        photoURL: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        storageQuota: 0,
+        usedStorage: 0,
+        type: UserType.USER,
+        isPaid: false,
+      } as FileUser);
+
+    return fileUser$.pipe(
+      switchMap(fileUser => {
+        console.log("getSubscriptionTier", getSubscriptionTier)
+        const tier = getSubscriptionTier(fileUser.isPaid);
+
+        // Считаем количество загрузок
+        const count$ = isGuest
+          ? of(this.guestUploads[fileUser.uid] ?? 0)
+          : from(this.usersService.getTodayUploadCount(fileUser.uid));
+
+        return count$.pipe(
           switchMap(count => {
-            const dailyLimit = USER_DAILY_LIMITS[foundUser.type as UserType];
-            if (count >= dailyLimit) {
+            if (count >= USER_DAILY_LIMITS[tier]) {
               throw new ForbiddenException(
-                `Достигнут лимит операций в день для ${foundUser.type} пользователя (${dailyLimit})`
+                `Достигнут лимит операций в день для ${tier} пользователя (${USER_DAILY_LIMITS[tier]})`
               );
             }
 
             const sizeMB = file.size / (1024 * 1024);
-            const maxSize = USER_FILE_SIZE_LIMITS_MB[foundUser.type as UserType][ext];
-            if (sizeMB > maxSize) {
+            if (sizeMB > USER_FILE_SIZE_LIMITS_MB[tier][ext]) {
               throw new BadRequestException(
-                `Превышен допустимый размер файла для ${foundUser.type} пользователя (${maxSize} MB)`
+                `Превышен допустимый размер файла для ${tier} пользователя (${USER_FILE_SIZE_LIMITS_MB[tier][ext]} MB)`
               );
             }
 
             return from(fileTypeFromBuffer(file.buffer)).pipe(
               map(detected => {
-                console.log("ALLOWED_MIME_TYPES---", getAllowedMimeTypes())
                 if (!detected || !isAllowedMimeType(detected.mime)) {
                   throw new BadRequestException(
                     `Недопустимый тип файла. Допустимые: ${getAllowedMimeTypes().join(', ')}`
                   );
                 }
-                return foundUser;
+                return fileUser;
               })
             );
           })
         );
       }),
-      switchMap(finalUser => {
-        const fileName = `${finalUser.uid}/${Date.now()}_${file.originalname}`;
+      switchMap(fileUser => {
+        const fileName = `${fileUser.uid}/${Date.now()}_${file.originalname}`;
         const fileUpload = this.bucket.file(fileName);
 
         return from(
@@ -93,23 +119,35 @@ export class FilesService {
               fileUpload.getSignedUrl({
                 action: 'read',
                 expires:
-                  finalUser.type === UserType.FREE
-                    ? Date.now() + 1000 * 60 * 60
-                    : Date.now() + 1000 * 60 * 60 * 24 * 30,
+                  getSubscriptionTier(fileUser.isPaid) === SubscriptionTier.PREMIUM
+                    ? Date.now() + 1000 * 60 * 60 * 24 * 30
+                    : Date.now() + 1000 * 60 * 60,
               })
             )
           ),
-          switchMap(([url]) =>
-            from(this.usersService.recordUpload(finalUser.uid)).pipe(
-              map(() => ({
+          switchMap(([url]) => {
+            // Записываем количество загрузок
+            if (!isGuest) {
+              return from(this.usersService.recordUpload(fileUser.uid)).pipe(
+                map(() => ({
+                  fileName,
+                  url,
+                  sizeMB: file.size / (1024 * 1024),
+                  mimeType: file.mimetype,
+                  subscriptionTier: getSubscriptionTier(fileUser.isPaid),
+                }))
+              );
+            } else {
+              this.guestUploads[fileUser.uid] = (this.guestUploads[fileUser.uid] ?? 0) + 1;
+              return of({
                 fileName,
                 url,
                 sizeMB: file.size / (1024 * 1024),
                 mimeType: file.mimetype,
-                userType: finalUser.type,
-              }))
-            )
-          ),
+                subscriptionTier: getSubscriptionTier(fileUser.isPaid),
+              });
+            }
+          }),
           catchError(err => {
             console.error(err);
             throw new InternalServerErrorException('Ошибка загрузки файла');

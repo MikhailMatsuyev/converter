@@ -1,4 +1,11 @@
-# scripts/get-project-tree-structure-and-libs-version-in-docker.ps1 - ASCII совместимый
+# scripts/get-project-tree-structure-and-libs-version-in-docker.ps1
+# Скрипт для отображения структуры проекта и версий технологий
+# PowerShell команды для работы с проектом:
+# .\scripts\get-project-tree-structure-and-libs-version-in-docker.ps1 -Simple  # Простая структура
+# .\scripts\get-project-tree-structure-and-libs-version-in-docker.ps1 -All     # Полная информация
+# .\scripts\get-project-tree-structure-and-libs-version-in-docker.ps1 -DockerOnly  # Только Docker инфо
+# .\scripts\get-project-tree-structure-and-libs-version-in-docker.ps1 -Path frontend  # Только фронтенд
+
 param(
     [string]$Path = ".",
     [switch]$All,
@@ -15,7 +22,7 @@ if (-not [System.IO.Path]::IsPathRooted($Path)) {
     $Path = Join-Path $ProjectRoot $Path
 }
 
-# Определяем платформу (совместимо с PowerShell 5.1)
+# Определяем платформу
 if ($PSVersionTable.PSVersion.Major -ge 6) {
     $IsWindows = $IsWindows
     $IsLinux = $IsLinux
@@ -42,7 +49,7 @@ if ($env:OS -eq "Windows_NT") {
     $IsMacOS = $true
 }
 
-# Цветовая схема в зависимости от платформы
+# Цветовая схема
 if ($IsWindows) {
     $PlatformColor = "Blue"
     $PlatformName = "Windows"
@@ -119,193 +126,29 @@ function Get-ProjectTree {
     }
 }
 
-function Get-TechnologyVersions {
-    Write-Host ""
-    Write-Host "TECHNOLOGY VERSIONS:" -ForegroundColor Cyan
-
-    $versions = @{}
-
-    # Docker версия (локально)
-    try {
-        $dockerVersion = docker --version 2>$null
-        if ($dockerVersion) {
-            $versions['Docker'] = ($dockerVersion -split ' ')[2] -replace ',', ''
-        } else {
-            $versions['Docker'] = "N/A"
-        }
-    } catch {
-        $versions['Docker'] = "N/A"
-    }
-
-    # Node.js версия через Docker (из контейнера backend)
-    try {
-        $nodeVersion = docker exec nest-backend-dev node --version 2>$null
-        if ($nodeVersion -and $nodeVersion.Trim()) {
-            $versions['Node.js'] = $nodeVersion.Trim()
-        } else {
-            # Если нет контейнера nest-backend-dev, пробуем другой или локальный
-            $localNodeVersion = node --version 2>$null
-            if ($localNodeVersion) {
-                $versions['Node.js'] = $localNodeVersion.Trim() + " (local)"
-            } else {
-                $versions['Node.js'] = "N/A"
-            }
-        }
-    } catch {
-        $versions['Node.js'] = "N/A"
-    }
-
-    # npm версия
-    try {
-        $npmVersion = docker exec nest-backend-dev npm --version 2>$null
-        if ($npmVersion -and $npmVersion.Trim()) {
-            $versions['npm'] = "v" + $npmVersion.Trim()
-        } else {
-            $localNpmVersion = npm --version 2>$null
-            if ($localNpmVersion) {
-                $versions['npm'] = "v" + $localNpmVersion.Trim() + " (local)"
-            } else {
-                $versions['npm'] = "N/A"
-            }
-        }
-    } catch {
-        $versions['npm'] = "N/A"
-    }
-
-    # TypeScript версия
-    try {
-        $tsVersion = docker exec nest-backend-dev npx tsc --version 2>$null
-        if ($tsVersion -and $tsVersion.Trim()) {
-            $versions['TypeScript'] = ($tsVersion.Trim() -split ' ')[1]
-        } else {
-            $localTsVersion = npx tsc --version 2>$null
-            if ($localTsVersion) {
-                $versions['TypeScript'] = ($localTsVersion.Trim() -split ' ')[1] + " (local)"
-            } else {
-                $versions['TypeScript'] = "N/A"
-            }
-        }
-    } catch {
-        $versions['TypeScript'] = "N/A"
-    }
-
-    # NestJS версия
-    try {
-        $nestVersion = docker exec nest-backend-dev nest --version 2>$null
-        if ($nestVersion -and $nestVersion.Trim()) {
-            $versions['NestJS'] = "v" + $nestVersion.Trim()
-        } else {
-            $localNestVersion = nest --version 2>$null
-            if ($localNestVersion) {
-                $versions['NestJS'] = "v" + $localNestVersion.Trim() + " (local)"
-            } else {
-                $versions['NestJS'] = "N/A"
-            }
-        }
-    } catch {
-        $versions['NestJS'] = "N/A"
-    }
-
-    # Angular версия (локально, так как обычно не в Docker)
-    try {
-        $angularOutput = npm list -g @angular/cli --depth=0 2>$null
-        if ($angularOutput) {
-            foreach ($line in $angularOutput) {
-                if ($line -match "@angular/cli") {
-                    $parts = $line -split '@'
-                    if ($parts.Count -ge 3) {
-                        $ver = $parts[2] -replace '[^\d.]', ''
-                        $versions['Angular CLI'] = "v" + $ver
-                        break
-                    }
-                }
-            }
-        }
-        if (-not $versions['Angular CLI']) {
-            $versions['Angular CLI'] = "Not installed globally"
-        }
-    } catch {
-        $versions['Angular CLI'] = "N/A"
-    }
-
-    # PostgreSQL версия
-    try {
-        $postgresVersion = docker exec postgres-dev psql -U postgres -t -c "SELECT version();" 2>$null
-        if ($postgresVersion -and $postgresVersion.Trim()) {
-            $versions['PostgreSQL'] = ($postgresVersion.Trim() -split ' ')[1]
-        } else {
-            $versions['PostgreSQL'] = "Container not running"
-        }
-    } catch {
-        $versions['PostgreSQL'] = "N/A"
-    }
-
-    # Redis версия
-    try {
-        $redisVersion = docker exec redis-dev redis-server --version 2>$null
-        if ($redisVersion -and $redisVersion.Trim()) {
-            $ver = ($redisVersion -split '=')[1] -split ' ' | Select-Object -First 1
-            $versions['Redis'] = $ver
-        } else {
-            $versions['Redis'] = "Container not running"
-        }
-    } catch {
-        $versions['Redis'] = "N/A"
-    }
-
-    # Prisma версия
-    try {
-        $prismaOutput = docker exec nest-backend-dev npx prisma --version 2>$null
-        if ($prismaOutput) {
-            $firstLine = ($prismaOutput -split "`n")[0]
-            if ($firstLine -and $firstLine.Trim()) {
-                $versions['Prisma'] = ($firstLine.Trim() -split ' ')[1]
-            } else {
-                $versions['Prisma'] = "N/A"
-            }
-        } else {
-            $localPrismaOutput = npx prisma --version 2>$null
-            if ($localPrismaOutput) {
-                $firstLineLocal = ($localPrismaOutput -split "`n")[0]
-                if ($firstLineLocal) {
-                    $versions['Prisma'] = ($firstLineLocal.Trim() -split ' ')[1] + " (local)"
-                } else {
-                    $versions['Prisma'] = "N/A"
-                }
-            } else {
-                $versions['Prisma'] = "N/A"
-            }
-        }
-    } catch {
-        $versions['Prisma'] = "N/A"
-    }
-
-    # Выводим все версии
-    $techOrder = @('Docker', 'Node.js', 'npm', 'TypeScript', 'NestJS', 'Angular CLI', 'PostgreSQL', 'Redis', 'Prisma')
-
-    foreach ($tech in $techOrder) {
-        $value = $versions[$tech]
-        if ($value -match "N/A|not running|Not installed|Error") {
-            $color = "Red"
-        } elseif ($value -match "local") {
-            $color = "Yellow"
-        } else {
-            $color = "Green"
-        }
-        Write-Host ("  {0,-15} : {1}" -f $tech, $value) -ForegroundColor $color
-    }
-}
-
 function Get-RunningContainers {
     try {
-        $containers = docker ps --format "table {{.Names}}`t{{.Image}}`t{{.Status}}`t{{.Ports}}" 2>$null
+        $containers = docker ps --format "table {{.Names}}\t{{.Image}}\t{{.Status}}\t{{.Ports}}" 2>$null
         if ($containers) {
             Write-Host ""
             Write-Host "RUNNING CONTAINERS:" -ForegroundColor Cyan
-            $containers | Out-Host
+            $containerLines = $containers -split "`n" | Where-Object { $_ -and $_.Trim() }
+            if ($containerLines.Count -gt 0) {
+                foreach ($line in $containerLines) {
+                    Write-Host "  $line" -ForegroundColor Gray
+                }
+            } else {
+                Write-Host "  No containers running" -ForegroundColor DarkGray
+            }
+        } else {
+            Write-Host ""
+            Write-Host "RUNNING CONTAINERS:" -ForegroundColor Cyan
+            Write-Host "  No containers running" -ForegroundColor DarkGray
         }
     } catch {
-        # Docker не установлен
+        Write-Host ""
+        Write-Host "RUNNING CONTAINERS:" -ForegroundColor Cyan
+        Write-Host "  Docker not available" -ForegroundColor Red
     }
 }
 
@@ -327,7 +170,7 @@ function Get-PlatformInfo {
         }
     }
 
-    # Информация о процессоре и памяти (только для Windows в этом примере)
+    # Информация о процессоре и памяти
     if ($IsWindows) {
         try {
             $cpu = Get-WmiObject Win32_Processor -ErrorAction SilentlyContinue | Select-Object -First 1
@@ -342,6 +185,383 @@ function Get-PlatformInfo {
         } catch {
             # Пропускаем, если не удалось получить информацию
         }
+    }
+}
+
+function Get-TechnologyVersions {
+    Write-Host ""
+    Write-Host "TECHNOLOGY VERSIONS:" -ForegroundColor Cyan
+
+    $versions = @{}
+    $runningContainers = @{}
+
+    # Получаем список запущенных контейнеров
+    try {
+        $containerList = docker ps --format "{{.Names}}|{{.Image}}" 2>$null
+        if ($containerList) {
+            foreach ($line in ($containerList -split "`n" | Where-Object { $_ })) {
+                $parts = $line -split '\|'
+                if ($parts.Count -ge 2) {
+                    $containerName = $parts[0].Trim()
+                    $imageName = $parts[1].Trim()
+                    $runningContainers[$containerName] = $imageName
+                }
+            }
+        }
+    } catch {
+        # Docker не установлен
+    }
+
+    # Docker версия
+    try {
+        $dockerVersion = docker --version 2>$null
+        if ($dockerVersion) {
+            $versions['Docker'] = ($dockerVersion -split ' ')[2] -replace ',', ''
+        } else {
+            $versions['Docker'] = "N/A"
+        }
+    } catch {
+        $versions['Docker'] = "N/A"
+    }
+
+    # Node.js версия
+    try {
+        $nodeVersion = $null
+        $fromContainer = $false
+
+        # Пробуем из контейнера
+        foreach ($container in $runningContainers.Keys) {
+            if ($container -match "backend|node|nest|api") {
+                $nodeVersion = docker exec $container node --version 2>$null
+                if ($nodeVersion -and $nodeVersion.Trim()) {
+                    $versions['Node.js'] = $nodeVersion.Trim() + " (container: $container)"
+                    $fromContainer = $true
+                    break
+                }
+            }
+        }
+
+        if (-not $fromContainer) {
+            $nodeVersion = node --version 2>$null
+            if ($nodeVersion) {
+                $versions['Node.js'] = $nodeVersion.Trim() + " (local)"
+            } else {
+                $versions['Node.js'] = "N/A"
+            }
+        }
+    } catch {
+        $versions['Node.js'] = "N/A"
+    }
+
+    # npm версия
+    try {
+        $npmVersion = $null
+        $fromContainer = $false
+
+        # Пробуем из контейнера
+        foreach ($container in $runningContainers.Keys) {
+            if ($container -match "backend|node|nest|api") {
+                $npmVersion = docker exec $container npm --version 2>$null
+                if ($npmVersion -and $npmVersion.Trim()) {
+                    $versions['npm'] = "v" + $npmVersion.Trim() + " (container: $container)"
+                    $fromContainer = $true
+                    break
+                }
+            }
+        }
+
+        if (-not $fromContainer) {
+            $npmVersion = npm --version 2>$null
+            if ($npmVersion) {
+                $versions['npm'] = "v" + $npmVersion.Trim() + " (local)"
+            } else {
+                $versions['npm'] = "N/A"
+            }
+        }
+    } catch {
+        $versions['npm'] = "N/A"
+    }
+
+    # TypeScript версия
+    try {
+        $tsVersion = $null
+        $fromContainer = $false
+
+        # Пробуем из контейнера
+        foreach ($container in $runningContainers.Keys) {
+            if ($container -match "backend|node|nest|api") {
+                $tsVersion = docker exec $container npx tsc --version 2>$null
+                if ($tsVersion -and $tsVersion.Trim()) {
+                    $versions['TypeScript'] = ($tsVersion.Trim() -split ' ')[1] + " (container: $container)"
+                    $fromContainer = $true
+                    break
+                }
+            }
+        }
+
+        if (-not $fromContainer) {
+            $tsVersion = npx tsc --version 2>$null
+            if ($tsVersion) {
+                $versions['TypeScript'] = ($tsVersion.Trim() -split ' ')[1] + " (local)"
+            } else {
+                $versions['TypeScript'] = "N/A"
+            }
+        }
+    } catch {
+        $versions['TypeScript'] = "N/A"
+    }
+
+    # NestJS версия
+    try {
+        $nestVersion = $null
+        $fromContainer = $false
+
+        # Пробуем из контейнера
+        foreach ($container in $runningContainers.Keys) {
+            if ($container -match "backend|node|nest|api") {
+                $nestVersion = docker exec $container nest --version 2>$null
+                if ($nestVersion -and $nestVersion.Trim()) {
+                    $versions['NestJS'] = "v" + $nestVersion.Trim() + " (container: $container)"
+                    $fromContainer = $true
+                    break
+                }
+            }
+        }
+
+        if (-not $fromContainer) {
+            $nestVersion = nest --version 2>$null
+            if ($nestVersion) {
+                $versions['NestJS'] = "v" + $nestVersion.Trim() + " (local)"
+            } else {
+                $versions['NestJS'] = "N/A"
+            }
+        }
+    } catch {
+        $versions['NestJS'] = "N/A"
+    }
+
+    # Angular CLI версия
+    try {
+        $angularVersion = $null
+
+        # Проверяем глобально
+        $angularGlobal = npm list -g @angular/cli --depth=0 2>$null
+        if ($angularGlobal -and ($angularGlobal | Where-Object { $_ -match "@angular/cli@" })) {
+            $match = [regex]::Match($angularGlobal, "@angular/cli@(\d+\.\d+\.\d+)")
+            if ($match.Success) {
+                $versions['Angular CLI'] = "v" + $match.Groups[1].Value + " (global)"
+            }
+        }
+
+        # Проверяем в проекте
+        if (-not $versions['Angular CLI'] -and (Test-Path "package.json")) {
+            $packageJson = Get-Content "package.json" | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if ($packageJson.devDependencies.'@angular/cli') {
+                $versions['Angular CLI'] = "v" + $packageJson.devDependencies.'@angular/cli' + " (project)"
+            } elseif ($packageJson.dependencies.'@angular/cli') {
+                $versions['Angular CLI'] = "v" + $packageJson.dependencies.'@angular/cli' + " (project)"
+            }
+        }
+
+        if (-not $versions['Angular CLI']) {
+            $versions['Angular CLI'] = "Not found"
+        }
+    } catch {
+        $versions['Angular CLI'] = "N/A"
+    }
+
+    # PostgreSQL версия
+    try {
+        $postgresFound = $false
+        foreach ($container in $runningContainers.Keys) {
+            # Ищем контейнер, имя которого содержит "postgres" и не содержит "pgadmin"
+            if ($container -match "postgres" -and $container -notmatch "pgadmin") {
+                # Пробуем получить версию через psql --version
+                $postgresVersion = docker exec $container psql --version 2>$null
+                if ($postgresVersion -and $postgresVersion.Trim()) {
+                    $versionMatch = [regex]::Match($postgresVersion.Trim(), "psql \(PostgreSQL\) (\d+\.\d+)")
+                    if ($versionMatch.Success) {
+                        $versions['PostgreSQL'] = $versionMatch.Groups[1].Value + " (container: $container)"
+                    } else {
+                        # Если не получилось, пробуем запрос к БД
+                        $postgresVersion = docker exec $container psql -U postgres -t -c "SELECT version();" 2>$null
+                        if ($postgresVersion -and $postgresVersion.Trim()) {
+                            $versionMatch = [regex]::Match($postgresVersion.Trim(), "PostgreSQL (\d+\.\d+)")
+                            if ($versionMatch.Success) {
+                                $versions['PostgreSQL'] = $versionMatch.Groups[1].Value + " (container: $container)"
+                            } else {
+                                $versions['PostgreSQL'] = "Unknown version (container: $container)"
+                            }
+                        } else {
+                            $versions['PostgreSQL'] = "Unknown version (container: $container)"
+                        }
+                    }
+                    $postgresFound = $true
+                    break
+                }
+            }
+        }
+
+        if (-not $postgresFound) {
+            $versions['PostgreSQL'] = "Container not running"
+        }
+    } catch {
+        $versions['PostgreSQL'] = "N/A"
+    }
+
+    # Redis версия
+    try {
+        $redisFound = $false
+        foreach ($container in $runningContainers.Keys) {
+            if ($container -match "redis|cache") {
+                $redisVersion = docker exec $container redis-server --version 2>$null
+                if ($redisVersion -and $redisVersion.Trim()) {
+                    $versionMatch = [regex]::Match($redisVersion, "Redis server v=(\d+\.\d+\.\d+)")
+                    if ($versionMatch.Success) {
+                        $versions['Redis'] = $versionMatch.Groups[1].Value + " (container: $container)"
+                    } else {
+                        # Альтернативный парсинг
+                        $ver = ($redisVersion -split '=')[1] -split ' ' | Select-Object -First 1
+                        if ($ver) {
+                            $versions['Redis'] = $ver + " (container: $container)"
+                        } else {
+                            $versions['Redis'] = "Unknown version (container: $container)"
+                        }
+                    }
+                    $redisFound = $true
+                    break
+                }
+            }
+        }
+
+        if (-not $redisFound) {
+            $versions['Redis'] = "Container not running"
+        }
+    } catch {
+        $versions['Redis'] = "N/A"
+    }
+
+    # Prisma версия - ИСПРАВЛЕНО: ищем в папке backend
+    try {
+        $prismaVersion = $null
+        $source = ""
+
+        # 1. Проверяем package.json в папке backend
+        $backendPackageJsonPath = Join-Path $ProjectRoot "backend\package.json"
+        $rootPackageJsonPath = Join-Path $ProjectRoot "package.json"
+
+        # Сначала пробуем backend/package.json
+        if (Test-Path $backendPackageJsonPath) {
+            $packageJson = Get-Content $backendPackageJsonPath | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if ($packageJson.devDependencies.prisma) {
+                $prismaVersion = $packageJson.devDependencies.prisma
+                $source = "backend/package.json (dev)"
+            }
+            if (-not $prismaVersion -and $packageJson.dependencies.prisma) {
+                $prismaVersion = $packageJson.dependencies.prisma
+                $source = "backend/package.json"
+            }
+            if (-not $prismaVersion -and $packageJson.devDependencies.'@prisma/client') {
+                $prismaVersion = $packageJson.devDependencies.'@prisma/client'
+                $source = "backend/client (dev)"
+            }
+            if (-not $prismaVersion -and $packageJson.dependencies.'@prisma/client') {
+                $prismaVersion = $packageJson.dependencies.'@prisma/client'
+                $source = "backend/client"
+            }
+        }
+
+        # 2. Если не нашли в backend, пробуем в корне
+        if (-not $prismaVersion -and (Test-Path $rootPackageJsonPath)) {
+            $packageJson = Get-Content $rootPackageJsonPath | ConvertFrom-Json -ErrorAction SilentlyContinue
+            if ($packageJson.devDependencies.prisma) {
+                $prismaVersion = $packageJson.devDependencies.prisma
+                $source = "root/package.json (dev)"
+            }
+            if (-not $prismaVersion -and $packageJson.dependencies.prisma) {
+                $prismaVersion = $packageJson.dependencies.prisma
+                $source = "root/package.json"
+            }
+            if (-not $prismaVersion -and $packageJson.devDependencies.'@prisma/client') {
+                $prismaVersion = $packageJson.devDependencies.'@prisma/client'
+                $source = "root/client (dev)"
+            }
+            if (-not $prismaVersion -and $packageJson.dependencies.'@prisma/client') {
+                $prismaVersion = $packageJson.dependencies.'@prisma/client'
+                $source = "root/client"
+            }
+        }
+
+        # 3. Если нашли в package.json
+        if ($prismaVersion) {
+            $versions['Prisma'] = $prismaVersion + " ($source)"
+        }
+        # 4. Если не нашли в package.json, пробуем контейнер
+        elseif ($runningContainers.Count -gt 0) {
+            foreach ($container in $runningContainers.Keys) {
+                if ($container -match "backend|node|nest|api") {
+                    # Пробуем несколько команд в контейнере
+                    $prismaOutput = docker exec $container npm list prisma --depth=0 2>$null
+                    if ($prismaOutput -and $prismaOutput -match "prisma@(\d+\.\d+\.\d+)") {
+                        $versions['Prisma'] = $Matches[1] + " (container: $container)"
+                        $prismaVersion = $Matches[1]
+                        break
+                    }
+
+                    $prismaClientOutput = docker exec $container npm list @prisma/client --depth=0 2>$null
+                    if (-not $prismaVersion -and $prismaClientOutput -and $prismaClientOutput -match "@prisma/client@(\d+\.\d+\.\d+)") {
+                        $versions['Prisma'] = $Matches[1] + " (container client: $container)"
+                        $prismaVersion = $Matches[1]
+                        break
+                    }
+                }
+            }
+        }
+
+        # 5. Если всё еще не нашли, пробуем локально через npm list
+        if (-not $prismaVersion) {
+            $npmListOutput = npm list prisma --depth=0 2>$null
+            if ($npmListOutput -and $npmListOutput -match "prisma@(\d+\.\d+\.\d+)") {
+                $versions['Prisma'] = $Matches[1] + " (local npm)"
+            } else {
+                $npmClientOutput = npm list @prisma/client --depth=0 2>$null
+                if ($npmClientOutput -and $npmClientOutput -match "@prisma/client@(\d+\.\d+\.\d+)") {
+                    $versions['Prisma'] = $Matches[1] + " (local client)"
+                } else {
+                    $versions['Prisma'] = "Not found"
+                }
+            }
+        }
+    } catch {
+        $versions['Prisma'] = "N/A"
+    }
+
+    # PowerShell версия
+    $versions['PowerShell'] = "v$($PSVersionTable.PSVersion)"
+
+    # Выводим все версии
+    $techOrder = @('PowerShell', 'Docker', 'Node.js', 'npm', 'TypeScript', 'NestJS', 'Angular CLI', 'PostgreSQL', 'Redis', 'Prisma')
+
+    Write-Host ""
+    foreach ($tech in $techOrder) {
+        $value = $versions[$tech]
+        if (-not $value) {
+            $value = "Not checked"
+        }
+
+        if ($value -match "N/A|not running|Not found|Error|can't get|Not checked") {
+            $color = "Red"
+        } elseif ($value -match "local|project|global|package.json") {
+            $color = "Yellow"
+        } elseif ($value -match "unknown|Unknown") {
+            $color = "DarkYellow"
+        } elseif ($value -match "container:") {
+            $color = "Green"
+        } else {
+            $color = "White"
+        }
+
+        Write-Host ("  {0,-15} : {1}" -f $tech, $value) -ForegroundColor $color
     }
 }
 

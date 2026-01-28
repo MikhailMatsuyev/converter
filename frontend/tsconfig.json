@@ -24,7 +24,9 @@
       "@shared/*": ["../shared/src/*"],
       "@interfaces/*": ["../shared/src/interfaces/*"],
       "@enums/*": ["../shared/src/enums/*"],
-      "@constants/*": ["../shared/src/constants/*"]
+      "@constants/*": ["../shared/src/constants/*"],
+      "@shared/types/*": ["../shared/src/types/*"],
+      "@shared/utils/*": ["../shared/src/utils/*"]
     }
   },
   "angularCompilerOptions": {

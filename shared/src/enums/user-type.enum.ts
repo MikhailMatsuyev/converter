@@ -1,4 +1,5 @@
 export enum UserType {
-  FREE = 'Free',
-  PAID = 'Paid',
+  USER = 'User',
+  ADMIN = 'Admin',
+  GUEST = 'Guest',
 }

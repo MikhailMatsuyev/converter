@@ -27,7 +27,7 @@ export class UsersService {
       email: data.email,
       displayName: data.displayName ?? null,
       photoURL: data.photoURL ?? null,
-      type: data.type ?? UserType.FREE, // по умолчанию Free
+      type: data.type ?? UserType.USER, // по умолчанию Free
     });
     return of(newUser);
   }

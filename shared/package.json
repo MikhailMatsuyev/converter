@@ -63,6 +63,14 @@
     "./enums": {
       "types": "./dist/enums/index.d.ts",
       "default": "./dist/enums/index.d.ts"
+    },
+    "./types": {
+      "types": "./dist/types/index.d.ts",
+      "default": "./dist/types/index.d.ts"
+    },
+    "./utils": {
+      "types": "./dist/utils/index.d.ts",
+      "default": "./dist/utils/index.d.ts"
     }
   }
 }
