@@ -31,7 +31,8 @@
       "@shared/constants/*": ["../shared/src/constants/*"],
       "@shared/types/*": ["../shared/src/types/*"],
       "@shared/utils/*": ["../shared/src/utils/*"],
-    }
+      "@prisma/client": ["./node_modules/@prisma/client"]
+    },
   },
   "ts-node": {
     "require": ["tsconfig-paths/register"]

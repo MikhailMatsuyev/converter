@@ -1,4 +1,4 @@
 export interface IAuthMe {
-  uid: string;
+  firebaseUid : string;
   email: string;
 }

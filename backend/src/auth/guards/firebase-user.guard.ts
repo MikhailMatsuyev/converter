@@ -29,19 +29,19 @@ export class FirebaseUserGuard implements CanActivate {
     return this.authService.validateFirebaseToken$(idToken).pipe(
       switchMap(decoded => {
         const domainUser: {
-          uid: string;
+          firebaseUid : string;
           email?: string;
           displayName?: string | null;
           photoURL?: string | null;
         } = {
-          uid: decoded.uid,               // decoded.uid всегда есть
+          firebaseUid : decoded.firebaseUid ,               // decoded.firebaseUid  всегда есть
           email: decoded.email ?? '',
           displayName: decoded.name ?? null,
           photoURL: decoded.picture ?? null,
         };
 
         // ищем пользователя в базе
-        const existingUser = this.usersService.findByFirebaseUid(domainUser.uid);
+        const existingUser = this.usersService.findByFirebaseUid(domainUser.firebaseUid );
 
         if (existingUser) {
           request.user = existingUser;

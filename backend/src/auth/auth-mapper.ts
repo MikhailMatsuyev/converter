@@ -13,7 +13,7 @@ export class AuthMapper {
 
     return from(auth.verifyIdToken(idToken)).pipe(
       map((decoded: DecodedIdToken) => ({
-        uid: decoded.uid,
+        firebaseUid : decoded.firebaseUid ,
         email: decoded.email ?? '',
       }))
     );

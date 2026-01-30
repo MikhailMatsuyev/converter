@@ -10,7 +10,7 @@ export type RequestUser =
 }
   | {
   isAuthenticated: true;
-  uid: string;
+  firebaseUid : string;
   type: UserType.USER | UserType.ADMIN;
   isPaid: boolean;
 };

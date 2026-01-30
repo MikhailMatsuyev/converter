@@ -40,26 +40,32 @@ export class FilesService {
       );
     }
 
-    const isGuest = !user.uid; // если нет uid, считаем гостем
-    const userId = isGuest ? 'guest-' + Math.random().toString(36).slice(2) : user.uid;
+    const isGuest = !user.firebaseUid ; // если нет firebaseUid , считаем гостем
+    const userId = isGuest ? 'guest-' + Math.random().toString(36).slice(2) : user.firebaseUid ;
     const isPaid = !!user.isPaid;
 
     // Для гостя формируем временный объект
     const fileUser$: Observable<FileUser> = user.type !== UserType.GUEST
-      ? this.usersService.findByFirebaseUid(user.uid).pipe(
+      ? this.usersService.findByFirebaseUid(user.firebaseUid).pipe(
         map(found => {
           if (!found) throw new ForbiddenException('Пользователь не найден');
-          return { ...found, isPaid: user.isPaid } as FileUser;
+
+          return {
+            ...found,
+            isPaid: user.isPaid,
+            createdAt: found.createdAt,
+            updatedAt: found.updatedAt,
+          } as FileUser;
         })
       )
       : of({
         id: 'guest-' + Date.now() + Math.random(),
-        uid: 'guest-' + Date.now() + Math.random(),
+        firebaseUid: 'guest-' + Date.now() + Math.random(),
         email: '',
         displayName: null,
         photoURL: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
         storageQuota: 0,
         usedStorage: 0,
         type: UserType.USER,
@@ -73,8 +79,8 @@ export class FilesService {
 
         // Считаем количество загрузок
         const count$ = isGuest
-          ? of(this.guestUploads[fileUser.uid] ?? 0)
-          : from(this.usersService.getTodayUploadCount(fileUser.uid));
+          ? of(this.guestUploads[fileUser.firebaseUid ] ?? 0)
+          : from(this.usersService.getTodayUploadCount(fileUser.firebaseUid ));
 
         return count$.pipe(
           switchMap(count => {
@@ -105,7 +111,7 @@ export class FilesService {
         );
       }),
       switchMap(fileUser => {
-        const fileName = `${fileUser.uid}/${Date.now()}_${file.originalname}`;
+        const fileName = `${fileUser.firebaseUid }/${Date.now()}_${file.originalname}`;
         const fileUpload = this.bucket.file(fileName);
 
         return from(
@@ -128,7 +134,7 @@ export class FilesService {
           switchMap(([url]) => {
             // Записываем количество загрузок
             if (!isGuest) {
-              return from(this.usersService.recordUpload(fileUser.uid)).pipe(
+              return from(this.usersService.recordUpload(fileUser.firebaseUid )).pipe(
                 map(() => ({
                   fileName,
                   url,
@@ -138,7 +144,7 @@ export class FilesService {
                 }))
               );
             } else {
-              this.guestUploads[fileUser.uid] = (this.guestUploads[fileUser.uid] ?? 0) + 1;
+              this.guestUploads[fileUser.firebaseUid ] = (this.guestUploads[fileUser.firebaseUid ] ?? 0) + 1;
               return of({
                 fileName,
                 url,

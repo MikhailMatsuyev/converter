@@ -13,6 +13,7 @@ export default defineConfig({
     seed: 'tsx src/prisma/seed.ts',
   },
   datasource: {
-    url: process.env.DATABASE_URL, // вместо adapter
+    url: env("DATABASE_URL"), // вместо adapter
+    shadowDatabaseUrl: process.env.SHADOW_DATABASE_URL,
   },
 });

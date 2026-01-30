@@ -1,5 +1,5 @@
 export class CreateUserDto {
-  uid!: string;
+  firebaseUid !: string;
   email?: string;
   displayName?: string | null;
   photoURL?: string | null;

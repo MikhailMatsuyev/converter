@@ -39,7 +39,7 @@ export class FilesController {
     const user: RequestUser = authUser
       ? {
         isAuthenticated: true,
-        uid: authUser.uid,
+        firebaseUid : authUser.firebaseUid ,
         type: authUser.type ?? UserType.USER,
         isPaid: authUser.isPaid ?? false,
       }

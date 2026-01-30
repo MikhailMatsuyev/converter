@@ -25,7 +25,11 @@
     "tree:backend": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./backend",
     "tree:frontend": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./frontend",
     "tree:shared": "powershell -ExecutionPolicy Bypass -File ./scripts/tree.ps1 -Path ./shared",
-    "firebase-login+auth|me": "node scripts/login.js"
+    "firebase-login+auth|me": "node scripts/login.js",
+    "prisma-migrate-dev": "docker exec -it nest-backend-dev npx prisma migrate dev --name add_paidUntil_to_user --config ./src/app/prisma/prisma.config.ts",
+    "prisma-generate": "npx prisma generate --schema ./backend/src/prisma/schema.prisma",
+    "docker-back": "docker exec -it nest-backend-dev sh",
+    "create-user-prisma": "npx ts-node backend/create-user-prisma.ts"
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

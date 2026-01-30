@@ -8,9 +8,10 @@ import { FirebaseAuthGuard } from "./security/firebase-auth.guard";
 import { FirebaseModule } from "./firebase/firebase.module";
 import { FilesModule } from "./files/files.module";
 import { UsersModule } from "./users/users.module";
+import { AppleModule } from "./apple/apple.module";
 
 @Module({
-  imports: [AuthModule, FirebaseModule, FilesModule, UsersModule],
+  imports: [AuthModule, FirebaseModule, FilesModule, UsersModule, AppleModule],
   controllers: [AppController, HealthController],
   providers: [
     AppService,

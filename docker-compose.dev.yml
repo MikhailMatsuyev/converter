@@ -15,7 +15,8 @@ services:
     environment:
       NODE_ENV: development
       PORT: 3000
-      DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_file_processor
+      # DATABASE_URL: postgresql://postgres:postgres@db:5432/ai_file_processor
+      DATABASE_URL: ${DATABASE_URL}
       FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
       FIREBASE_CLIENT_EMAIL: ${FIREBASE_CLIENT_EMAIL}
       FIREBASE_PRIVATE_KEY: ${FIREBASE_PRIVATE_KEY}

@@ -34,7 +34,7 @@ export class FirebaseAuthGuard implements CanActivate {
       process.env.NODE_ENV === 'development'
     ) {
       request.user = {
-        uid: 'test-user',
+        firebaseUid : 'test-user',
         email: 'test@test.com',
       };
       return of(true);

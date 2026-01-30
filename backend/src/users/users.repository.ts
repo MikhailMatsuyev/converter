@@ -7,12 +7,14 @@ import { UserType } from "@shared/enums";
 export class UsersRepository {
   private users: IUser[] = [];
 
-  findByFirebaseUid(uid: string): IUser | undefined {
-    return this.users.find(u => u.uid === uid);
+  findByFirebaseUid(firebaseUid : string): IUser | undefined {
+    console.log("========firebaseUid=========", firebaseUid)
+    console.log("========this.users=========", this.users)
+    return this.users.find((u: IUser) => u.firebaseUid  === firebaseUid );
   }
 
   findById(id: string): IUser | undefined {
-    return this.users.find(u => u.id === id);
+    return this.users.find((u: IUser) => u.id === id);
   }
 
   findAll(): IUser[] {
@@ -23,15 +25,16 @@ export class UsersRepository {
     const now = new Date();
     const newUser: IUser = {
       id: (Date.now() + Math.random()).toString(), // временный уникальный id
-      uid: user.uid!,
+      firebaseUid : user.firebaseUid !,
       email: user.email ?? '',
       displayName: user.displayName ?? null,
       photoURL: user.photoURL ?? null,
-      createdAt: now,
-      updatedAt: now,
+      createdAt: now.toISOString(),
+      updatedAt: now.toISOString(),
       storageQuota: user.storageQuota ?? 1024 * 1024 * 1024, // 1GB по умолчанию
       type: user.type ?? UserType.USER,
       usedStorage: user.usedStorage ?? 0,
+      isPaid: user.isPaid ?? false
     };
     this.users.push(newUser);
     return newUser;

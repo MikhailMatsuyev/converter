@@ -1,19 +1,18 @@
 import { Injectable, OnModuleInit, OnModuleDestroy } from '@nestjs/common';
-// import { prisma } from './prisma.config';
 import { Observable, from, of } from 'rxjs';
 import { catchError, map } from "rxjs/operators";
-import { PrismaClient } from "@prisma/client";
-import { Prisma } from '@prisma/client';
+import { PrismaPg } from "@prisma/adapter-pg";
+import { Prisma, PrismaClient } from "@prisma/client";
 type User = Prisma.UserGetPayload<{}>;
 
 @Injectable()
 export class PrismaService extends PrismaClient implements OnModuleInit, OnModuleDestroy {
   constructor() {
-    /*const adapter = new PrismaPgAdapter({
+    const adapter = new PrismaPg({
       connectionString: process.env.DATABASE_URL!,
     });
-    super({ adapter }); // Prisma 7 принимает adapter*/
-    super();
+    super({ adapter });
+    // super();
   }
 
   // public client = prisma;
@@ -26,9 +25,17 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     return from(this.$disconnect());
   }
 
-  findUserByUid(uid: string): Observable<User | null> {
-    return from(this.user.findUnique({ where: { uid } }));
-  }
+  // onModuleInit(): Observable<unknown> {
+  //   return from(this.$connect());
+  // }
+  //
+  // onModuleDestroy(): Observable<unknown> {
+  //   return from(this.$disconnect());
+  // }
+
+  // findUserByUid(uid: string): Observable<User | null> {
+  //   return from(this.user.findUnique({ where: { uid } }));
+  // }
 
   createUser(data: Prisma.UserCreateInput): Observable<User> {
     return from(this.user.create({ data }));

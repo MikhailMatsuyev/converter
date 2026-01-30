@@ -4,7 +4,7 @@ import { UserType } from "@shared/enums";
 
 export class UserEntity implements IUser {
   id: string;
-  uid: string;           // Firebase UID
+  firebaseUid : string;           // Firebase UID
   email: string;
   displayName: string | null;
   photoURL: string | null;
@@ -17,7 +17,7 @@ export class UserEntity implements IUser {
   constructor(data: Partial<IUser>) {
     const now = new Date();
     this.id = data.id ?? (Date.now() + Math.random()).toString(); // временный уникальный id
-    this.uid = data.uid!;
+    this.firebaseUid  = data.firebaseUid !;
     this.email = data.email ?? '';
     this.displayName = data.displayName ?? null;
     this.photoURL = data.photoURL ?? null;
