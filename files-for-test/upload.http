@@ -1,0 +1,37 @@
+### ЗАГРУЗКА ОДНОГО ФАЙЛА УСПЕХ
+POST http://localhost:3000/files/upload-multiple
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="test-valid-61.jpg"
+
+< test-valid-61.jpg
+--WebAppBoundary--
+
+### НЕВАЛИДНОЕ РАСШИРЕНИЕ ОШИБКА
+POST http://localhost:3000/files/upload-multiple
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="test-empty.pdfa"
+
+< test-empty.pdfa
+--WebAppBoundary--
+
+### ЗАГРУЗКА ФАЙЛА АВТОРИЗОВАННЫМ ЮЗЕРОМ
+
+# curl -X POST http://localhost:3000/files/upload-multiple
+#  -H "Authorization: Bearer YOUR_USER_TOKEN_HERE"
+#  -F "files=@test.jpg"
+POST http://localhost:3000/files/upload-multiple
+Authorization: Bearer eyJhbGciOiJSUzI1NiIsImtpZCI6ImY3NThlNTYzYzBiNjRhNzVmN2UzZGFlNDk0ZDM5NTk1YzE0MGVmOTMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20vYWktZmlsZS1wcm9jZXNzb3ItOGQwOWUiLCJhdWQiOiJhaS1maWxlLXByb2Nlc3Nvci04ZDA5ZSIsImF1dGhfdGltZSI6MTc3MDEzNTQ2NiwidXNlcl9pZCI6Ikx6NWFLRXNBWXRlZkhwSVVORjNzRnNtMW5OWTIiLCJzdWIiOiJMejVhS0VzQVl0ZWZIcElVTkYzc0ZzbTFuTlkyIiwiaWF0IjoxNzcwMTM1NDY2LCJleHAiOjE3NzAxMzkwNjYsImVtYWlsIjoidGVzdEB0ZXN0LmNvbSIsImVtYWlsX3ZlcmlmaWVkIjpmYWxzZSwiZmlyZWJhc2UiOnsiaWRlbnRpdGllcyI6eyJlbWFpbCI6WyJ0ZXN0QHRlc3QuY29tIl19LCJzaWduX2luX3Byb3ZpZGVyIjoicGFzc3dvcmQifX0.cbICSemNHa27u-C_SAtU3BNj-jaFRiI6BgOv-bDbWAmdLsmQe4FUG79A86_WwdRmWfONDJQlWXg2pTfbbJGuio7FrDeNlVz9zpcOWi4GEwOC2dKxUQxGArKWpcr6UPJiwEt-AC9WERoMczDojbXEWuce81iJr8WBSUBrxSuNMIpCVUGA8TAKhAMESJRmQWtpCFDxVlhjZW1T9lEXI8jMzIX925hK7wgyRVPkFpoaFGi25SDnQoDrLgQK04mHcp-5WitM8yOA5q0OHSqlYebmanPQ4K6bKcw-QdUPPkPof3n8SvJWDDh-i388Qzxea6Pp6iXTUG7Q8CBvxJCbVZ5msg
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+
+--WebAppBoundary
+Content-Disposition: form-data; name="files"; filename="test-valid-61.jpg"
+
+< test-valid-61.jpg
+--WebAppBoundary--
+
+###
+

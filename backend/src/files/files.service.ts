@@ -16,7 +16,16 @@ import {
 import { IUser } from '@shared/interfaces/user.interface';
 import { getFirebaseAdmin } from '../firebase-admin/firebase-admin.config';
 import { UserType } from "@shared/enums";
-import { getSubscriptionTier, SubscriptionTier, USER_DAILY_LIMITS, USER_FILE_SIZE_LIMITS_MB } from "@shared/constants";
+import {
+  getFileExpiration,
+  getSubscriptionTier,
+  getUserFileSizeLimit,
+  SubscriptionTier,
+  USER_DAILY_LIMITS,
+  USER_FILE_SIZE_LIMITS_MB
+} from "@shared/constants";
+import { tap } from "rxjs/operators";
+import Redis from "ioredis";
 
 export type FileUser = IUser & { isPaid: boolean };
 
@@ -24,6 +33,8 @@ export type FileUser = IUser & { isPaid: boolean };
 export class FilesService {
   private bucket: any;
   private guestUploads: Record<string, number> = {};
+  private redis: Redis;
+  private redisKey: string
 
   constructor(private readonly usersService: UsersService) {
     const admin = getFirebaseAdmin();
@@ -33,6 +44,7 @@ export class FilesService {
   }
 
   uploadFile(file: Express.Multer.File, user: FileUser) {
+    console.log("=====", file.path);
     const ext = file.originalname.split('.').pop()?.toLowerCase() as FileExtensions;
     if (!ext || !isAllowedExtension(ext)) {
       throw new BadRequestException(
@@ -40,9 +52,10 @@ export class FilesService {
       );
     }
 
-    const isGuest = !user.firebaseUid ; // если нет firebaseUid , считаем гостем
-    const userId = isGuest ? 'guest-' + Math.random().toString(36).slice(2) : user.firebaseUid ;
-    const isPaid = !!user.isPaid;
+    const isGuest = !user.firebaseUid; // если нет firebaseUid , считаем гостем
+    // const redisKey = `guest-upload-count:${fileUser.firebaseUid}`;
+    const userId = isGuest ? 'guest-' + Math.random().toString(36).slice(2) : user.firebaseUid;
+    const isPaid = user.isPaid;
 
     // Для гостя формируем временный объект
     const fileUser$: Observable<FileUser> = user.type !== UserType.GUEST
@@ -75,14 +88,17 @@ export class FilesService {
     return fileUser$.pipe(
       switchMap(fileUser => {
         console.log("getSubscriptionTier", getSubscriptionTier)
-        const tier = getSubscriptionTier(fileUser.isPaid);
+        this.redisKey = `guest-upload-count:${fileUser.firebaseUid}`;
+        const tier: SubscriptionTier = getSubscriptionTier(fileUser.isPaid);
 
-        // Считаем количество загрузок
-        const count$ = isGuest
-          ? of(this.guestUploads[fileUser.firebaseUid ] ?? 0)
-          : from(this.usersService.getTodayUploadCount(fileUser.firebaseUid ));
+        const count$: Observable<number> = isGuest ?
+          from(this.redis.get(this.redisKey).then(val => parseInt(val || '0', 10))) :
+          from(this.usersService.getTodayUploadCount(fileUser.firebaseUid));
 
         return count$.pipe(
+          tap(count => {
+            console.log("count$", count)
+          }),
           switchMap(count => {
             if (count >= USER_DAILY_LIMITS[tier]) {
               throw new ForbiddenException(
@@ -101,7 +117,7 @@ export class FilesService {
               map(detected => {
                 if (!detected || !isAllowedMimeType(detected.mime)) {
                   throw new BadRequestException(
-                    `Недопустимый тип файла. Допустимые: ${getAllowedMimeTypes().join(', ')}`
+                    `Превышен допустимый размер файла для ${getSubscriptionTier(fileUser.isPaid)} пользователя (${getUserFileSizeLimit(fileUser.isPaid, ext)} MB)`
                   );
                 }
                 return fileUser;
@@ -111,30 +127,29 @@ export class FilesService {
         );
       }),
       switchMap(fileUser => {
-        const fileName = `${fileUser.firebaseUid }/${Date.now()}_${file.originalname}`;
+        const fileName = `${fileUser.firebaseUid}/${Date.now()}_${file.originalname}`;
         const fileUpload = this.bucket.file(fileName);
 
         return from(
           fileUpload.save(file.buffer, {
-            metadata: { contentType: file.mimetype },
+            metadata: {contentType: file.mimetype},
             resumable: false,
           })
         ).pipe(
           switchMap(() =>
             from(
-              fileUpload.getSignedUrl({
-                action: 'read',
-                expires:
-                  getSubscriptionTier(fileUser.isPaid) === SubscriptionTier.PREMIUM
-                    ? Date.now() + 1000 * 60 * 60 * 24 * 30
-                    : Date.now() + 1000 * 60 * 60,
-              })
+              from(
+                fileUpload.getSignedUrl({
+                  action: 'read',
+                  expires: Date.now() + getFileExpiration(fileUser.isPaid), // ← здесь применяем новое правило
+                })
+              )
             )
           ),
           switchMap(([url]) => {
             // Записываем количество загрузок
             if (!isGuest) {
-              return from(this.usersService.recordUpload(fileUser.firebaseUid )).pipe(
+              return from(this.usersService.recordUpload(fileUser.firebaseUid)).pipe(
                 map(() => ({
                   fileName,
                   url,
@@ -144,14 +159,22 @@ export class FilesService {
                 }))
               );
             } else {
-              this.guestUploads[fileUser.firebaseUid ] = (this.guestUploads[fileUser.firebaseUid ] ?? 0) + 1;
-              return of({
-                fileName,
-                url,
-                sizeMB: file.size / (1024 * 1024),
-                mimeType: file.mimetype,
-                subscriptionTier: getSubscriptionTier(fileUser.isPaid),
-              });
+              // Увеличиваем счетчик в Redis с TTL 24 часа
+              return from(
+                this.redis
+                  .multi()
+                  .incr(this.redisKey)
+                  .expire(this.redisKey, 60 * 60 * 24)
+                  .exec(),
+              ).pipe(
+                map(() => ({
+                  fileName,
+                  url,
+                  sizeMB: file.size / (1024 * 1024),
+                  mimeType: file.mimetype,
+                  subscriptionTier: getSubscriptionTier(fileUser.isPaid),
+                })),
+              );
             }
           }),
           catchError(err => {

@@ -29,7 +29,8 @@
     "prisma-migrate-dev": "docker exec -it nest-backend-dev npx prisma migrate dev --name add_paidUntil_to_user --config ./src/app/prisma/prisma.config.ts",
     "prisma-generate": "npx prisma generate --schema ./backend/src/prisma/schema.prisma",
     "docker-back": "docker exec -it nest-backend-dev sh",
-    "create-user-prisma": "npx ts-node backend/create-user-prisma.ts"
+    "create-user-prisma": "npx ts-node backend/create-user-prisma.ts",
+    "upload-files-2": "curl.exe -X POST http://localhost:3000/files/upload-multiple -F \"files=@files-for-test/test-valid-61.jpg\" -F \"files=@files-for-test/test-valid-61-copy.jpg\""
   },
   "devDependencies": {
     "concurrently": "^8.2.2"

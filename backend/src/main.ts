@@ -175,6 +175,12 @@ const bootstrap$: Observable<BootstrapResult> = createNestApp$().pipe(
     logger.log(`🎉 Application bootstrap completed successfully!`);
     logger.log(`🔗 Base URL: ${url}`);
 
+    app.use((req, res, next) => {
+      console.log('raw files:', req.files);
+      console.log('raw body:', req.body);
+      next();
+    });
+
     // Типизированный graceful shutdown
     const gracefulShutdown = (signal: string): void => {
       logger.log(`\n⚠️  Received ${signal}. Gracefully shutting down...`);

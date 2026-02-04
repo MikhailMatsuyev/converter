@@ -1,0 +1,13 @@
+###
+# curl -X POST http://localhost:3000/internal/apple/set-paid
+#-H "Content-Type: application/json"
+#-H "x-internal-secret: my-secret-key"
+#-d '{"firebaseUid":"test-user-123","isPaid":true,"reason":"manual test"}'
+POST http://localhost:3000/internal/apple/set-paid
+x-internal-secret: my-secret-key
+Content-Type: application/json
+
+{"firebaseUid":"test-user-123","isPaid":true,"reason":"manual test"}
+
+
+###

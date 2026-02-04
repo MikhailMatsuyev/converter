@@ -33,6 +33,7 @@ export class FilesController {
   @UseInterceptors(FilesUploadInterceptor('files', 10))
   uploadMultipleFiles(@UploadedFiles() files: Express.Multer.File[], @Req() req: Request) {
     console.log('---(req as any).user---', (req as any).user);
+    console.log("=====", files);
 
     const authUser = (req as any).user;
 

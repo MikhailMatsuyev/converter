@@ -27,7 +27,7 @@ export class App {
   }
 
   login() {
-    this.auth.login('test@test.com', 'password123').subscribe();
+    this.auth.login('test@example.com', 'password123').subscribe();
   }
 
   req(): void {
@@ -35,6 +35,10 @@ export class App {
       next: (res) => console.log('ME:', res),
       error: (err) => console.error('ERROR:', err),
     });
+  }
+
+  signup(): void{
+    this.auth.register('test@example.com', 'password123').subscribe();
   }
 
 

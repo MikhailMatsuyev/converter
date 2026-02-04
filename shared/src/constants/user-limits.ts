@@ -8,7 +8,7 @@ export enum SubscriptionTier {
 // дневной лимит
 export const USER_DAILY_LIMITS: Record<SubscriptionTier, number> = {
   [SubscriptionTier.FREE]: 5,
-  [SubscriptionTier.PREMIUM]: 50,
+  [SubscriptionTier.PREMIUM]: 10,
 };
 
 // лимиты размера файлов
@@ -18,19 +18,30 @@ export const USER_FILE_SIZE_LIMITS_MB: Record<
 > = {
   [SubscriptionTier.FREE]: {
     [FileExtensions.PDF]: 10,
-    [FileExtensions.JPG]: 5,
-    [FileExtensions.JPEG]: 5,
-    [FileExtensions.PNG]: 5,
-    [FileExtensions.HEIC]: 5,
+    [FileExtensions.JPG]: 1,
+    [FileExtensions.JPEG]: 1,
+    [FileExtensions.PNG]: 1,
+    [FileExtensions.HEIC]: 1,
   },
   [SubscriptionTier.PREMIUM]: {
-    [FileExtensions.PDF]: 100,
-    [FileExtensions.JPG]: 50,
-    [FileExtensions.JPEG]: 50,
-    [FileExtensions.PNG]: 50,
-    [FileExtensions.HEIC]: 50,
+    [FileExtensions.PDF]: 20,
+    [FileExtensions.JPG]: 2,
+    [FileExtensions.JPEG]: 2,
+    [FileExtensions.PNG]: 2,
+    [FileExtensions.HEIC]: 2,
   },
 };
+
+// новые константы: срок хранения файлов (в миллисекундах)
+export const USER_FILE_EXPIRATION_MS: Record<SubscriptionTier, number> = {
+  [SubscriptionTier.FREE]: 1000 * 60 * 60,       // 1 час
+  [SubscriptionTier.PREMIUM]: 1000 * 60 * 60 * 24, // 24 часа
+};
+
+export function getFileExpiration(isPaid: boolean): number {
+  const tier: SubscriptionTier = getSubscriptionTier(isPaid);
+  return USER_FILE_EXPIRATION_MS[tier];
+}
 
 export function getSubscriptionTier(isPaid: boolean): SubscriptionTier {
   return isPaid ? SubscriptionTier.PREMIUM : SubscriptionTier.FREE;
