@@ -1,4 +1,5 @@
 import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
+import { BullModule } from '@nestjs/bullmq'; // Добавляем импорт
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { HealthController } from "./health/health.controller";
@@ -13,7 +14,24 @@ import { UploadLimitMiddleware } from "./files/upload-limit.middleware";
 import { RedisModule } from "./redis/redis.module";
 
 @Module({
-  imports: [AuthModule, FirebaseModule, FilesModule, UsersModule, AppleModule,
+  imports: [
+    // Настройка BullMQ (движок очередей)
+    BullModule.forRoot({
+      connection: {
+        host: process.env.REDIS_HOST || 'redis-dev',
+        port: Number(process.env.REDIS_PORT) || 6379,
+        password: process.env.REDIS_PASSWORD,
+      },
+    }),
+    // Регистрация конкретной очереди для файлов
+    BullModule.registerQueue({
+      name: 'file-processing',
+    }),
+    AuthModule,
+    FirebaseModule,
+    FilesModule,
+    UsersModule,
+    AppleModule,
     RedisModule
   ],
   controllers: [AppController, HealthController],
@@ -26,9 +44,12 @@ import { RedisModule } from "./redis/redis.module";
   ],
 })
 export class AppModule implements NestModule {
+  constructor() {
+    console.log("process.env.REDIS_HOST", process.env.REDIS_HOST)
+  }
   configure(consumer: MiddlewareConsumer) {
     consumer
       .apply(UploadLimitMiddleware)
-      .forRoutes('files/upload-multiple'); // применяем к нужному роуту
+      .forRoutes('files/upload-multiple');
   }
 }

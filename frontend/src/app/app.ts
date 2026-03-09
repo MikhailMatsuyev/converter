@@ -7,6 +7,7 @@ import { AuthFacade } from './auth/auth.facade';
 import { HttpClient } from '@angular/common/http';
 import { LoginComponent } from './auth/login/login.component';
 import { environment } from '../environments/environment';
+import { SocketService } from "src/app/auth/socket.service";
 
 @Component({
   selector: 'app-root',
@@ -19,7 +20,11 @@ export class App {
   protected readonly firebaseAuth = firebaseAuth;
   protected readonly firebase = firebase;
 
-  constructor(protected auth: AuthFacade, private http: HttpClient) {
+  constructor(
+    protected auth: AuthFacade,
+    private http: HttpClient,
+    private socketService: SocketService
+  ) {
     //this.auth.register('test@test.com', 'password123').subscribe();
     this.login();
     this.auth.user$.subscribe(

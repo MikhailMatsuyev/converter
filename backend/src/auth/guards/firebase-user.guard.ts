@@ -3,7 +3,60 @@ import { Observable, of, throwError } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import { UsersService } from "../../users/users.service";
 import { AuthService } from "../auth.service";
-import { IUser } from "@shared/interfaces/user.interface";
+
+import { from } from 'rxjs'; // добавляем from для конвертации Promise в Observable
+
+@Injectable()
+export class FirebaseUserGuard implements CanActivate {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly authService: AuthService
+  ) {}
+
+  canActivate(context: ExecutionContext): Observable<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const authHeader = request.headers.authorization;
+
+    if (!authHeader) throw new UnauthorizedException('No token');
+
+    const idToken = authHeader.split(' ')[1];
+    if (!idToken) throw new UnauthorizedException('Invalid token');
+
+    return this.authService.validateFirebaseToken$(idToken).pipe(
+      switchMap(decoded => {
+        const firebaseUid = decoded.uid; // В Firebase Admin SDK обычно decoded.uid
+
+        // 1. Ищем юзера (конвертируем Promise от Prisma в Observable)
+        return from(this.usersService.findByFirebaseUid(firebaseUid)).pipe(
+          switchMap(user => {
+            if (user) {
+              request.user = user;
+              return of(true);
+            }
+
+            // 2. Если нет — создаем
+            const userData = {
+              firebaseUid,
+              email: decoded.email ?? '',
+              displayName: decoded.name ?? null,
+              photoURL: decoded.picture ?? null,
+            };
+
+            return from(this.usersService.createFromFirebase(userData)).pipe(
+              map(newUser => {
+                request.user = newUser;
+                return true;
+              })
+            );
+          })
+        );
+      }),
+      catchError(() => throwError(() => new UnauthorizedException('Auth failed')))
+    );
+  }
+}
+
+/*import { IUser } from "@shared/interfaces/user.interface";
 
 @Injectable()
 export class FirebaseUserGuard implements CanActivate {
@@ -28,6 +81,7 @@ export class FirebaseUserGuard implements CanActivate {
     // Используем существующий Observable метод validateFirebaseToken$
     return this.authService.validateFirebaseToken$(idToken).pipe(
       switchMap(decoded => {
+        const firebaseUid = decoded.uid;
         const domainUser: {
           firebaseUid : string;
           email?: string;
@@ -56,4 +110,4 @@ export class FirebaseUserGuard implements CanActivate {
       catchError(err => throwError(() => new UnauthorizedException('Invalid Firebase token')))
     );
   }
-}
+}*/

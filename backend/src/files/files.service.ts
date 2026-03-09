@@ -16,6 +16,7 @@ import {
 import { IUser } from '@shared/interfaces/user.interface';
 import { getFirebaseAdmin } from '../firebase-admin/firebase-admin.config';
 import { UserType } from "@shared/enums";
+import { FileStatus } from '@prisma/client';
 import {
   getFileExpiration,
   getSubscriptionTier,
@@ -26,6 +27,7 @@ import {
 } from "@shared/constants";
 import { tap } from "rxjs/operators";
 import Redis from "ioredis";
+import { PrismaService } from "../prisma/prisma.service";
 
 export type FileUser = IUser & { isPaid: boolean };
 
@@ -36,11 +38,48 @@ export class FilesService {
   private redis: Redis;
   private redisKey: string
 
-  constructor(private readonly usersService: UsersService) {
+  constructor(
+    private readonly usersService: UsersService,
+    private readonly prisma: PrismaService) {
     const admin = getFirebaseAdmin();
     const bucketName = process.env.FIREBASE_STORAGE_BUCKET?.trim();
     if (!bucketName) throw new Error('FIREBASE_STORAGE_BUCKET is not set!');
     this.bucket = admin.storage().bucket(bucketName);
+  }
+
+  async saveToDatabaseAndStorage(file: Express.Multer.File, user: FileUser) {
+    // 1. Формируем URL (в будущем здесь будет реальный S3/Firebase)
+    const mockUrl = `https://storage.googleapis.com{file.originalname}`;
+
+    // 2. Определяем UID.
+    // Если юзер авторизован — берем его firebaseUid.
+    // Если гость — используем guestId из нашего Middleware или системный маркер.
+    const targetUid = user.firebaseUid || (user as any).guestId || 'guest-system';
+
+    // 3. Создаем запись файла с автоматическим созданием/привязкой юзера
+    return this.prisma.file.create({
+      data: {
+        filename: file.filename || file.originalname,
+        originalName: file.originalname,
+        size: file.size,
+        mimetype: file.mimetype,
+        url: mockUrl,
+        status: 'PENDING', // Используем строку для обхода ошибок TS2820
+        user: {
+          connectOrCreate: {
+            where: { firebaseUid: targetUid },
+            create: {
+              firebaseUid: targetUid,
+              // Используем email из IUser, если его нет (у гостя) — генерируем
+              email: (user as any).email || `${targetUid}@internal.guest`,
+              displayName: (user as any).isAuthenticated ? UserType.USER : UserType.GUEST,
+              isPaid: user.isPaid || false,
+              // storageQuota и usedStorage возьмутся по умолчанию из prisma.schema
+            },
+          },
+        },
+      },
+    });
   }
 
   uploadFile(file: Express.Multer.File, user: FileUser) {
