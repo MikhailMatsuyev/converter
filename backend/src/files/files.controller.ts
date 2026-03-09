@@ -54,16 +54,21 @@ export class FilesController {
 
     // 2. Добавляем задачи в очередь BullMQ для фоновой обработки
     await Promise.all(
-      uploadResults.map(res =>
-        this.fileQueue.add('process-ai', {
-          fileId: res.id,
-          userId: fileUser.id,
-          mimetype: res.mimetype
+      // Мы используем исходный массив files, чтобы достать buffer
+      files.map((file, index) => {
+        const dbRecord = uploadResults[index]; // берем соответствующую запись из БД
+
+        return this.fileQueue.add('process-ai', {
+          fileId: dbRecord.id,
+          userId: fileUser.firebaseUid || fileUser.id, // UID для комнаты сокетов
+          buffer: file.buffer,        // КРИТИЧНО: передаем сами данные
+          originalName: file.originalname, // для формирования имени превью
+          mimetype: file.mimetype
         }, {
-          attempts: 3, // если упадет, повторить 3 раза
-          backoff: 5000 // пауза между попытками
-        })
-      )
+          attempts: 3,
+          backoff: 5000
+        });
+      })
     );
 
     // 3. Мгновенно возвращаем ID файлов. Фронтенд начнет их "слушать" по WebSocket
